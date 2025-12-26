@@ -1,0 +1,156 @@
+/* Conversation card in inbox */
+.conversation-card {
+  padding: 12px 16px;
+  background: white;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: background 0.2s;
+}
+.conversation-card:hover {
+    color: #fff;
+  background: #333;
+}
+
+/* Main page */
+.messages-page {
+  max-width: 750px;
+  margin: 30px auto;
+  padding: 20px;
+  background: #F5F7FB;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  height: 75vh;
+}
+
+/* Title */
+.messages-title {
+  text-align: center;
+  margin-bottom: 20px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Conversation list */
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 10px;
+}
+
+/* Chat messages */
+.message-card {
+  max-width: 100%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 15px;
+  line-height: 1.4;
+  word-wrap: break-word;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sender messages (left) */
+.message-card.sender {
+  background: #ffffff;
+  align-self: flex-start;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 18px;
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 18px;
+}
+
+/* Your messages (right) */
+.message-card.mine {
+  background: #D9FDD3;
+  color: black;
+  align-self: flex-end;
+  border-top-left-radius: 18px;
+  border-top-right-radius: 4px;
+  border-bottom-left-radius: 18px;
+  border-bottom-right-radius: 4px;
+}
+
+/* Message header (sender name) */
+/* .message-header {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #6b7280;
+} */
+
+/* Message content */
+.message-content {
+  font-size: 15px;
+}
+
+/* Timestamp under message (optional) */
+.message-time {
+  font-size: 10px;
+  color: #9ca3af;
+  margin-top: 2px;
+  text-align: right;
+}
+
+.reply-box {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;                       /* space between textarea and button */
+  padding: 6px 12px;              /* tighter padding like ChatGPT */
+  background: #f3f4f6;            /* light gray background */
+  border: 1px solid #d1d5db;      /* subtle border */
+  border-radius: 24px;             /* pill-shaped */
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+.reply-box textarea {
+  flex: 1;
+  border: none;                 /* remove default border */
+  background: transparent;      /* transparent so parent bg shows */
+  resize: none;
+  outline: none;                /* remove focus outline */
+  padding: 8px 12px;
+  font-size: 14px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.reply-box button {
+  padding: 10px 14px;
+  background: #333;             /* dark send button */
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+
+/* Back button */
+.back-button {
+  margin-top: 10px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+/* Scrollbar for messages */
+.messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messages-container::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 3px;
+}
