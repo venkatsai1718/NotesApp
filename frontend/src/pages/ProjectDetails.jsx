@@ -175,7 +175,7 @@ function ProjectDetails() {
   );
 
   return (
-    <div className="project-details-container">
+    <div className="container">
       {/* Project Info */}
       <section className="project-info">
         <h2 className="project-title">{project.title}</h2>

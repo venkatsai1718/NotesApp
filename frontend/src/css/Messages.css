@@ -102,7 +102,7 @@
   display: flex;
   gap: 8px;                       /* space between textarea and button */
   padding: 6px 12px;              /* tighter padding like ChatGPT */
-  background: #f3f4f6;            /* light gray background */
+  background: #333;
   border: 1px solid #d1d5db;      /* subtle border */
   border-radius: 24px;             /* pill-shaped */
   align-items: center;
@@ -112,7 +112,8 @@
 .reply-box textarea {
   flex: 1;
   border: none;                 /* remove default border */
-  background: transparent;      /* transparent so parent bg shows */
+  background: transparent;
+  color: #fff;
   resize: none;
   outline: none;                /* remove focus outline */
   padding: 8px 12px;

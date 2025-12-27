@@ -75,9 +75,9 @@ function Messages() {
       </div>
     );
   }
-const capitalize = (str) => {
-  return `${str[0].toUpperCase()}${str.slice(1)}`;
-};
+  const capitalize = (str) => {
+    return `${str[0].toUpperCase()}${str.slice(1)}`;
+  };
 
   // Messages view
   return (
