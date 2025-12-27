@@ -1,7 +1,7 @@
 /* Conversation card in inbox */
 .conversation-card {
   padding: 12px 16px;
-  background: white;
+  border: 1px solid#F0EFED;
   border-radius: 12px;
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -17,11 +17,11 @@
   max-width: 750px;
   margin: 30px auto;
   padding: 20px;
-  background: #F5F7FB;
   border-radius: 10px;
   display: flex;
   flex-direction: column;
   height: 75vh;
+  background: #202020;
 }
 
 /* Title */
@@ -29,7 +29,6 @@
   text-align: center;
   margin-bottom: 20px;
   font-weight: 600;
-  color: #111827;
 }
 
 /* Conversation list */
@@ -58,6 +57,7 @@
 /* Sender messages (left) */
 .message-card.sender {
   background: #ffffff;
+  color: #333;
   align-self: flex-start;
   border-top-left-radius: 4px;
   border-top-right-radius: 18px;

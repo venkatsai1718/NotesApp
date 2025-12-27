@@ -1,20 +1,13 @@
 .new-project {
-  max-width: 900px;
-  background: #ffffff;
   padding: 2rem;
   border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  background: #202020;
+  color: #F0EFED;
+  box-shadow: 0 10px 30px rgba(8, 8, 8, 0.8);
 }
 
 .new-project h2 {
-  color: #1a237e;
   margin-bottom: 1.5rem;
-}
-
-.new-project h3 {
-  margin-top: 2rem;
-  margin-bottom: 0.8rem;
-  color: #333;
 }
 
 /* Inputs */
@@ -27,6 +20,8 @@
   border: 1px solid #c5cae9;
   font-size: 14px;
   transition: border 0.3s ease;
+  background: #202020;
+  color: #F0EFED;
 }
 
 .new-project textarea {
@@ -42,8 +37,8 @@
 /* Buttons */
 .create-btn {
   padding: 12px 22px;
-  background: linear-gradient(135deg, #1976d2, #42a5f5);
-  color: white;
+  color: #202020;
+  background: #F0EFED;
   border: none;
   border-radius: 12px;
   font-weight: 600;
@@ -53,7 +48,7 @@
 
 .create-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(25, 118, 210, 0.4);
+
 }
 
 .new-project button {
@@ -61,7 +56,7 @@
 }
 
 /* Notes preview */
-.notes-list {
+/* .notes-list {
   margin-top: 1rem;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -73,7 +68,7 @@
   padding: 1rem;
   border-radius: 12px;
   font-size: 14px;
-}
+} */
 
 .error {
   color: #d32f2f;

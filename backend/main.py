@@ -309,24 +309,3 @@ async def send_message(
     return msg
 
 
-
-
-# @app.get("/messages/{member_id}")
-# async def get_messages(
-#     member_id: str,
-#     current_user: dict = Depends(get_current_user),
-# ):
-#     user_id = str(current_user["_id"])
-
-#     messages = await db.messages.find({
-#         "$or": [
-#             {"sender_id": user_id, "receiver_id": member_id},
-#             {"sender_id": member_id, "receiver_id": user_id},
-#         ]
-#     }).sort("created_at", 1).to_list(1000)
-
-#     for msg in messages:
-#         msg["_id"] = str(msg["_id"])
-
-#     return messages
-

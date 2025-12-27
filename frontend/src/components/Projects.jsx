@@ -33,7 +33,7 @@ function Projects() {
   if (loading) return <p>Loading...</p>;
 
   return (
-    <div>
+    <div className="projects-container">
       <h2>Your Projects</h2>
 
       {projects.length === 0 ? (
