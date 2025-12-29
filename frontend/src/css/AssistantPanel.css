@@ -1,0 +1,175 @@
+.assistant-panel {
+  top: 0;
+  right: 0;
+  width: 360px;
+  height: 100vh;
+  overflow-y: auto;
+  color: #d4d4d4;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+}
+
+/* Header */
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: #252526;
+  color: #c5cae9;
+  border-bottom: 1px solid #3E4452;
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #cccccc;
+}
+
+/* Close button */
+.close-btn {
+  background: transparent;
+  border: none;
+  color: #cccccc;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+}
+
+.close-btn:hover {
+  background: #333333;
+  border-radius: 4px;
+}
+
+/* Input area */
+.assistant-panel textarea {
+  flex: 1;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  border: none;
+  resize: none;
+  padding: 1rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  outline: none;
+}
+
+.assistant-panel textarea::placeholder {
+  color: #6a6a6a;
+}
+
+.assistant-panel textarea::-webkit-scrollbar {
+  width: 8px;
+}
+
+.assistant-panel textarea::-webkit-scrollbar-thumb {
+  background: #424242;
+  border-radius: 4px;
+}
+
+.assistant-panel textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.send-btn {
+  background: #0e639c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  margin: 2rem;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.send-btn:hover {
+  background: #1177bb;
+}
+
+.send-btn:active {
+  transform: scale(0.96);
+}
+
+.send-btn:disabled {
+  background: #333;
+  cursor: not-allowed;
+}
+
+.assistant-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.assistant-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.75rem 1rem;
+}
+
+.chat-row {
+  display: flex;
+  margin-bottom: 0.75rem;
+}
+
+.chat-row.user {
+  justify-content: flex-end;
+}
+
+.chat-row.assistant {
+  justify-content: flex-start;
+}
+
+.chat-bubble {
+  max-width: 85%;
+  padding: 0.5rem 0.7rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+/* User message */
+.chat-row.user .chat-bubble {
+  background: #0e639c; /* VS Code blue */
+  color: white;
+}
+
+/* Assistant message */
+.chat-row.assistant .chat-bubble {
+  background: #252526;
+  color: #d4d4d4;
+}
+
+/* Input bar */
+.input-bar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  border: 1px solid #3E4452;
+  background: #1e1e1e;
+  flex-wrap: nowrap;
+}
+
+/* textarea */
+.input-bar textarea {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  padding: 0.4rem 0.5rem;
+  height: 32px;
+  line-height: 1.4;
+  box-sizing: border-box;
+}
+
+/* send button */
+.send-btn {
+  height: 32px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
