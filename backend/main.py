@@ -70,7 +70,7 @@ async def get_current_user_info(current_user: dict = Depends(get_current_user)):
 async def get_projects(
     current_user: dict = Depends(get_current_user)
 ):
-    user_id = str(current_user["_id"])  # ✅ FORCE STRING
+    user_id = str(current_user["_id"])
 
     projects = []
     async for project in db["projects"].find({
@@ -309,3 +309,32 @@ async def send_message(
     return msg
 
 
+@app.post('/llms')
+async def llm_request(data: models.LLMRequest):
+    # getting user message
+    last_message = data.messages[-1].message
+    print(last_message)
+    # TEMP response (replace with real LLM later)
+    response = f"Answer: {ask_llm(last_message)}"
+
+    return {
+        "role": "assistant",
+        "message": response
+    }
+    
+from langchain_openai import ChatOpenAI
+from dotenv import load_dotenv
+import os
+
+
+def ask_llm(prompt: str) -> str:
+    load_dotenv()
+    OPEN_ROUTER_KEY = os.getenv("OPENROUTER_API_KEY")
+    llm = ChatOpenAI(
+        model="meta-llama/llama-3.3-70b-instruct:free",
+    # model="openrouter/auto",
+    api_key=OPEN_ROUTER_KEY,
+    base_url="https://openrouter.ai/api/v1",
+    )
+    response = llm.invoke(prompt)
+    return response.content

@@ -47,3 +47,10 @@ class MessageCreate(BaseModel):
     receiver_id: str
     content: str
     parent_id: str | None = None
+    
+class LLMMessage(BaseModel):
+    role: str   # "user" | "assistant"
+    message: str
+
+class LLMRequest(BaseModel):
+    messages: List[LLMMessage]

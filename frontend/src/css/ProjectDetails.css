@@ -1,5 +1,5 @@
 .container {
-  height: 100%;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
 }
@@ -93,14 +93,6 @@
 .project-notes {
   flex: 4;
   padding: 1rem;
-  overflow-y: auto;
-  /* Hide scrollbar */
-  scrollbar-width: none;        /* Firefox */
-  -ms-overflow-style: none;     /* IE & Edge (legacy) */
-}
-
-.project-notes::-webkit-scrollbar {
-  display: none;                /* Chrome, Safari */
 }
 
 .notes {
@@ -113,12 +105,13 @@
   justify-content:left;
   align-items: center;
   gap: 14rem;
+  margin-bottom: 1em;
 }
 
 .notes-title {
   color: #4f46e5;
   font-size: 1.35em;
-  margin-bottom: 1em;
+  align-items: center;
 }
 .note-card {
   border: 1px solid #fff;
@@ -147,8 +140,8 @@
 }
 
 .add-note-btn {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: none;
   background: #4f46e5;;
@@ -230,7 +223,7 @@
 }
 
 .modal-actions .cancel {
-  background: #ccc;
+  background: #fff;
   border: none;
   padding: 8px 14px;
   border-radius: 6px;
