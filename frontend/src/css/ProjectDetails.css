@@ -66,6 +66,7 @@
 
 .members {
   color: #4f46e5;
+  font-size: 1.35rem;
 }
 
 .member-list {
@@ -92,8 +93,14 @@
 .project-notes {
   flex: 4;
   padding: 1rem;
-  /* border-top: 1px solid #4f46e5; */
   overflow-y: auto;
+  /* Hide scrollbar */
+  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;     /* IE & Edge (legacy) */
+}
+
+.project-notes::-webkit-scrollbar {
+  display: none;                /* Chrome, Safari */
 }
 
 .notes {
@@ -103,13 +110,14 @@
 }
 .notes-header {
   display: flex;
-  justify-content: space-between;
+  justify-content:left;
   align-items: center;
+  gap: 14rem;
 }
 
 .notes-title {
   color: #4f46e5;
-  font-size: 1.05em;
+  font-size: 1.35em;
   margin-bottom: 1em;
 }
 .note-card {
@@ -123,7 +131,7 @@
 }
 
 .note-card:hover {
-  background: #a0bdf9;
+  background-color: #191919;
 }
 
 @media (max-width: 900px) {
@@ -139,13 +147,13 @@
 }
 
 .add-note-btn {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: none;
   background: #4f46e5;;
   color: white;
-  font-size: 20px;
+  font-size: 16px;
   cursor: pointer;
 }
 

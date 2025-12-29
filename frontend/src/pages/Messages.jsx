@@ -4,7 +4,7 @@ import "../css/Messages.css";
 import { useAuth } from "../contexts/AuthContext";
 
 function Messages() {
-  const { currentUser, loading } = useAuth();
+  const { currentUser } = useAuth();
 
   const [conversations, setConversations] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);

@@ -1,16 +1,14 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "../css/ProjectDetails.css";
 import api from "../api";
 import { useAuth } from "../contexts/AuthContext";
 
 function ProjectDetails() {
-  const navigate = useNavigate();
 
   const { projectId } = useParams();
   const { currentUser, loading } = useAuth();
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [memberEmail, setMemberEmail] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [noteTitle, setNoteTitle] = useState("");
@@ -150,6 +148,9 @@ function ProjectDetails() {
     }
   };
 
+    const capitalize = (str) => {
+    return `${str[0].toUpperCase()}${str.slice(1)}`;
+  };
   if (!localStorage.getItem("token")) {
     return null;
   }
@@ -178,7 +179,7 @@ function ProjectDetails() {
     <div className="container">
       {/* Project Info */}
       <section className="project-info">
-        <h2 className="project-title">{project.title}</h2>
+        <h2 className="project-title">{capitalize(project.title)}</h2>
         <p className="project-description">
           {project.description || "No description"}
         </p>
@@ -222,7 +223,7 @@ function ProjectDetails() {
               className="member"
               onClick={() => handleMemberClick(member)}
             >
-              {member.name} - {member.email}
+              {capitalize(member.name)} - {member.email}
             </li>
           ))}
         </ul>
@@ -231,7 +232,7 @@ function ProjectDetails() {
       {selectedMember && (
         <div className="modal-backdrop">
           <div className="modal">
-            <h3>Message {selectedMember.name}</h3>
+            <h3>{capitalize(selectedMember.name)}</h3>
             <textarea
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
@@ -280,7 +281,7 @@ function ProjectDetails() {
                   setShowModal(true);
                 }}
               >
-                <h4 className="note-title">{note.title}</h4>
+                <h4 className="note-title">{capitalize(note.title)}</h4>
                 <p className="note-text">
                   {note.body.length > 100
                     ? note.body.substring(0, 100) + " ..."
