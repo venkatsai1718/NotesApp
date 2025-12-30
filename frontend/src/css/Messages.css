@@ -1,3 +1,9 @@
+.messages-inbox{
+  text-align: center;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
 /* Conversation card in inbox */
 .conversation-card {
   padding: 12px 16px;
@@ -12,25 +18,41 @@
   background: #333;
 }
 
+
 /* Main page */
 .messages-page {
-  max-width: 750px;
-  margin: 30px auto;
-  padding: 20px;
-  border-radius: 10px;
   display: flex;
   flex-direction: column;
-  height: 75vh;
-  background: #202020;
+  height: 90vh;
+
 }
 
+.message-header {
+  display: flex;
+align-items: center;  
+  margin-bottom: 1rem;
+}
 /* Title */
 .messages-title {
+  flex: 2;
   text-align: center;
-  margin-bottom: 20px;
   font-weight: 600;
 }
 
+/* Back button */
+.back-button {
+  flex: 1;
+  min-width: 40px;    /* won't shrink below this */
+  max-width: 100px;   /* won't grow beyond this */
+  margin-top: 10px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+  font-weight: 500;
+}
 /* Conversation list */
 .messages-container {
   flex: 1;
@@ -39,6 +61,10 @@
   flex-direction: column;
   gap: 1rem;
   padding: 10px;
+}
+
+.user-messages {
+  border: 1px solid#F0EFED;
 }
 
 /* Chat messages */
@@ -111,11 +137,11 @@
 }
 .reply-box textarea {
   flex: 1;
-  border: none;                 /* remove default border */
+  border: none;
   background: transparent;
   color: #fff;
   resize: none;
-  outline: none;                /* remove focus outline */
+  outline: none;
   padding: 8px 12px;
   font-size: 14px;
   border-radius: 20px;
@@ -125,7 +151,7 @@
 
 .reply-box button {
   padding: 10px 14px;
-  background: #333;             /* dark send button */
+  background: #333;
   color: white;
   border: none;
   border-radius: 10px;
@@ -133,18 +159,6 @@
   font-weight: bold;
 }
 
-
-/* Back button */
-.back-button {
-  margin-top: 10px;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 6px;
-  background: #2563eb;
-  color: white;
-  cursor: pointer;
-  font-weight: 500;
-}
 
 /* Scrollbar for messages */
 .messages-container::-webkit-scrollbar {

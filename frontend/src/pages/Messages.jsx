@@ -60,7 +60,7 @@ function Messages() {
     // Conversation list
     return (
       <div className="messages-page">
-        <h2 className="messages-title">Inbox</h2>
+        <h2 className="messages-inbox">Inbox</h2>
         <div className="messages-container">
           {conversations.map((user) => (
             <div
@@ -82,8 +82,13 @@ function Messages() {
   // Messages view
   return (
     <div className="messages-page">
+      <div className="message-header">
+      <button onClick={() => setSelectedUser(null)} className="back-button">
+        ← Back
+      </button>
       <h2 className="messages-title">{capitalize(selectedUser.name)}</h2>
-      <div className="messages-container">
+      </div>
+      <div className="messages-container user-messages">
         {messages.map((msg) => (
           <div
             key={msg._id}
@@ -113,10 +118,6 @@ function Messages() {
           {sending ? "Sending..." : "Send"}
         </button>
       </div>
-
-      <button onClick={() => setSelectedUser(null)} className="back-button">
-        ← Back to Inbox
-      </button>
     </div>
   );
 }
