@@ -3,9 +3,9 @@ import { useEffect, useState } from "react";
 import "../css/ProjectDetails.css";
 import api from "../api";
 import { useAuth } from "../contexts/AuthContext";
+import { useSelectedNotes } from "../contexts/SelectedNotesContext";
 
 function ProjectDetails() {
-
   const { projectId } = useParams();
   const { currentUser, loading } = useAuth();
   const [error, setError] = useState("");
@@ -14,6 +14,9 @@ function ProjectDetails() {
   const [noteTitle, setNoteTitle] = useState("");
   const [newNote, setNewNote] = useState("");
   const [editingIndex, setEditingIndex] = useState(null);
+
+  const { selectedNotes, setSelectedNotes } = useSelectedNotes();
+
   const [project, setProject] = useState({
     id: "",
     title: "",
@@ -110,7 +113,7 @@ function ProjectDetails() {
       setMemberEmail("");
     } catch (err) {
       if (err.response?.data?.detail) {
-        setError(err.response.data.detail); 
+        setError(err.response.data.detail);
       } else {
         setError("Failed to add member");
       }
@@ -148,7 +151,7 @@ function ProjectDetails() {
     }
   };
 
-    const capitalize = (str) => {
+  const capitalize = (str) => {
     return `${str[0].toUpperCase()}${str.slice(1)}`;
   };
   if (!localStorage.getItem("token")) {
@@ -196,8 +199,6 @@ function ProjectDetails() {
             {error}
           </p>
         )}
-
-        {/* Only show input & button if current user is the creator */}
 
         {isCreator && (
           <div className="add-member-section">
@@ -266,15 +267,24 @@ function ProjectDetails() {
           </button>
         </div>
 
-        <div className="notes">
+        {/* <div className="notes">
           {project.notes?.length === 0 ? (
             <p>No notes yet.</p>
           ) : (
             sortedNotes.map((note) => (
               <div
                 key={note.id}
-                className="note-card"
-                onClick={() => {
+                className={`note-card ${"isSelected " ? "selected" : ""}`}
+                onClick={(e) => {
+                  if (e.ctrlKey || e.metaKey) {
+                    setSelectedNotes((prev) =>
+                      prev.some((n) => n.id === note.id)
+                        ? prev.filter((n) => n.id !== note.id)
+                        : [...prev, note]
+                    );
+                    return;
+                  }
+
                   setNoteTitle(note.title);
                   setNewNote(note.body);
                   setEditingIndex(note.id); // use backend ID
@@ -293,7 +303,51 @@ function ProjectDetails() {
               </div>
             ))
           )}
+        </div> */}
+<div className="notes">
+  {project.notes?.length === 0 ? (
+    <p>No notes yet.</p>
+  ) : (
+    sortedNotes.map((note) => {
+      const isSelected = selectedNotes.some((n) => n.id === note.id);
+
+      return (
+        <div
+          key={note.id}
+          className={`note-card ${isSelected ? "selected" : ""}`}
+          onClick={(e) => {
+            if (e.ctrlKey || e.metaKey) {
+              setSelectedNotes((prev) =>
+                prev.some((n) => n.id === note.id)
+                  ? prev.filter((n) => n.id !== note.id)
+                  : [...prev, note]
+              );
+              return;
+            }
+
+            setNoteTitle(note.title);
+            setNewNote(note.body);
+            setEditingIndex(note.id);
+            setShowModal(true);
+          }}
+        >
+          <h4 className="note-title">{capitalize(note.title)}</h4>
+
+          <p className="note-text">
+            {note.body.length > 100
+              ? note.body.substring(0, 100) + " ..."
+              : note.body}
+          </p>
+
+          <span className="note-date">
+            Last Updated: {note.createdAt}
+          </span>
         </div>
+      );
+    })
+  )}
+</div>
+
       </section>
 
       {/* Modal */}

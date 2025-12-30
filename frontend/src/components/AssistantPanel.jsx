@@ -1,37 +1,70 @@
 import api from "../api";
 import { useState } from "react";
 import "../css/AssistantPanel.css";
+import { useSelectedNotes } from "../contexts/SelectedNotesContext";
 
 function AssistantPanel({ onClose }) {
   const [chatHistory, setChatHistory] = useState([]);
   const [chat, setChat] = useState("");
 
+  // const handleOnClick = async () => {
+  //   if (!chat.trim()) return;
+
+  //   try {
+  //     const newMessage = { role: "user", message: chat };
+  //     const updatedHistory = [...chatHistory, newMessage];
+
+  //     setChatHistory(updatedHistory);
+  //     setChat("");
+  //     const res = await api.post("/llms", {
+  //       messages: updatedHistory,
+  //     });
+
+  //     setChatHistory((prev) => [
+  //       ...prev,
+  //       { role: "assistant", message: JSON.stringify(res.data.message) },
+  //     ]);
+  //   } catch (err) {
+  //     setChatHistory((prev) => [
+  //       ...prev,
+  //       {
+  //         role: "assistant",
+  //         message: "⚠️ Failed to get response",
+  //       },
+  //     ]);
+  //   }
+  // };
+
+  const { selectedNotes, setSelectedNotes } = useSelectedNotes();
+
   const handleOnClick = async () => {
     if (!chat.trim()) return;
 
-    try {
-      const newMessage = { role: "user", message: chat };
-      const updatedHistory = [...chatHistory, newMessage];
+    const context = selectedNotes
+      .map((note) => `Title: ${note.title}\n${note.body}`)
+      .join("\n\n");
 
-      setChatHistory(updatedHistory);
-      setChat("");
-      const res = await api.post("/llms", {
-        messages: updatedHistory,
-      });
+    const userMessage = context
+      ? `Context:\n${context}\n\nQuestion:\n${chat}`
+      : chat;
 
-      setChatHistory((prev) => [
-        ...prev,
-        { role: "assistant", message: JSON.stringify(res.data.message) },
-      ]);
-    } catch (err) {
-      setChatHistory((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          message: "⚠️ Failed to get response",
-        },
-      ]);
-    }
+    const updatedHistory = [
+      ...chatHistory,
+      { role: "user", message: userMessage },
+    ];
+
+    setChatHistory(updatedHistory);
+    setChat("");
+    setSelectedNotes([]);
+
+    const res = await api.post("/llms", {
+      messages: updatedHistory,
+    });
+
+    setChatHistory((prev) => [
+      ...prev,
+      { role: "assistant", message: res.data.message },
+    ]);
   };
 
   return (
@@ -65,10 +98,7 @@ function AssistantPanel({ onClose }) {
             }
           }}
         />
-        <button
-          className="send-btn"
-          onClick={handleOnClick}
-        >
+        <button className="send-btn" onClick={handleOnClick}>
           Send
         </button>
       </div>

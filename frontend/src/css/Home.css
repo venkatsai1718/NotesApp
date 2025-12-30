@@ -3,6 +3,7 @@
   display: flex;
   height: 100vh;
   background-color: #191919;
+  overflow: hidden;
   color: #f0efed;
 }
 
@@ -49,7 +50,6 @@
   color: #f0efed;
   flex: 1;
   padding: 2rem;
-  overflow-y: auto;
   transition: margin-right 0.25s ease;
 }
 
