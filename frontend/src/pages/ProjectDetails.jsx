@@ -163,7 +163,8 @@ const handleDeleteNote = async () => {
         content: messageText.trim(),
       });
 
-      console.log("Message sent:", res.data);
+      // console.log("Message sent:", res.data);
+  sendEmailNotification({'sender_name':currentUser.name, 'receiver_name': selectedMember.name,'email': selectedMember.email, 'message': messageText.trim()});
 
       // close modal
       setSelectedMember(null);
@@ -200,6 +201,33 @@ const handleDeleteNote = async () => {
   const sortedNotes = [...project.notes].sort(
     (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
   );
+
+const sendEmailNotification = (data) => {
+  if (!window.emailjs) {
+    console.error("EmailJS not loaded");
+    return;
+  }
+  window.emailjs
+    .send(
+      "service_vdtt318",
+      "template_tsl5c89",
+      {
+        email: data.email,
+        sender_name: data.sender_name,
+        receiver_name: data.receiver_name,
+        message: data.message,
+      }
+    )
+    .then(
+      (result) => {
+        console.log("Email sent", result.text);
+      },
+      (error) => {
+        console.error("Email failed", error);
+      }
+    );
+};
+
 
   return (
     <div className="container">
