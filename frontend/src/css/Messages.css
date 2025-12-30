@@ -7,16 +7,16 @@
 /* Conversation card in inbox */
 .conversation-card {
   padding: 12px 16px;
-  border: 1px solid#F0EFED;
+  /* border: 1px solid#F0EFED; */
   border-radius: 12px;
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   transition: background 0.2s;
 }
-.conversation-card:hover {
+/* .conversation-card:hover {
   color: #fff;
   background: #333;
-}
+} */
 
 
 /* Main page */
@@ -82,8 +82,8 @@ align-items: center;
 
 /* Sender messages (left) */
 .message-card.sender {
-  background: #ffffff;
-  color: #333;
+  /* background: #ffffff;
+  color: #333; */
   align-self: flex-start;
   border-top-left-radius: 4px;
   border-top-right-radius: 18px;
@@ -93,8 +93,8 @@ align-items: center;
 
 /* Your messages (right) */
 .message-card.mine {
-  background: #D9FDD3;
-  color: black;
+  /* background: #D9FDD3;
+  color: black; */
   align-self: flex-end;
   border-top-left-radius: 18px;
   border-top-right-radius: 4px;
@@ -126,11 +126,11 @@ align-items: center;
 .reply-box {
   margin-top: 10px;
   display: flex;
-  gap: 8px;                       /* space between textarea and button */
-  padding: 6px 12px;              /* tighter padding like ChatGPT */
-  background: #333;
-  border: 1px solid #d1d5db;      /* subtle border */
-  border-radius: 24px;             /* pill-shaped */
+  gap: 8px;
+  padding: 6px 12px;
+  /* background: #333;
+  border: 1px solid #d1d5db; */
+  border-radius: 24px;
   align-items: center;
   width: 100%;
   box-sizing: border-box;
@@ -139,7 +139,7 @@ align-items: center;
   flex: 1;
   border: none;
   background: transparent;
-  color: #fff;
+  /* color: #fff; */
   resize: none;
   outline: none;
   padding: 8px 12px;
@@ -151,8 +151,8 @@ align-items: center;
 
 .reply-box button {
   padding: 10px 14px;
-  background: #333;
-  color: white;
+  /* background: #333;
+  color: white; */
   border: none;
   border-radius: 10px;
   cursor: pointer;

@@ -17,16 +17,16 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1rem;
-  background: #252526;
+  /* background: #252526;
   color: #c5cae9;
-  border-bottom: 1px solid #3E4452;
+  border-bottom: 1px solid #3E4452; */
 }
 
 .panel-header h3 {
   margin: 0;
   font-size: 0.9rem;
   font-weight: 500;
-  color: #cccccc;
+  /* color: #cccccc; */
 }
 
 /* Close button */
@@ -47,8 +47,8 @@
 /* Input area */
 .assistant-panel textarea {
   flex: 1;
-  background: #1e1e1e;
-  color: #d4d4d4;
+  /* background: #1e1e1e;
+  color: #d4d4d4; */
   border: none;
   resize: none;
   padding: 1rem;
@@ -151,8 +151,8 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.6rem;
-  border: 1px solid #3E4452;
-  background: #1e1e1e;
+  /* border: 1px solid #3E4452; */
+  /* background: #1e1e1e; */
   flex-wrap: nowrap;
 }
 

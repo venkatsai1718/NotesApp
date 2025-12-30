@@ -1,61 +1,100 @@
-:root {
-  /* Backgrounds & text */
-  --bg-color: #f5f5f5;               /* light page background */
-  --text-color: #1e1e1e;             /* main text color */
-  --sidebar-bg: #ffffff;              /* sidebar background */
-  --member-title-color: #0077a3;     /* similar highlight color */
+[data-theme="light"] {
+  --bg-color: #f6f7f9;
+  --text-color: #1f2933;
 
-  /* Project card */
-  --project-card-p: #2a2a2a;         /* normal text inside project card */
-  --project-card-small: #666666;     /* secondary text */
+  --sidebar-bg: #ffffff;
+  --dashboard-profile-color: orangered;
+  --sidebar-a-color: #4b5563;
+  --sidebar-li-color: #4b5563;
+  --sidebar-a-hover-color: orangered;
 
-  /* Notes */
-  --note-bg: #ffffff;                 /* note card background */
-  --note-selected-bg: rgba(14, 99, 156, 0.12); /* selected note highlight, subtle */
+  --layout-border: 1px solid #4b5563;
+  --box-border: 1px solid #d1d5db;
+  --title-color: #0077a3;
 
-  /* Buttons */
-  --button-bg: #0e639c;              /* primary button */
-  --button-text: #ffffff;            /* button text */
-  --button-bg-hover: #1177bb;        /* hover effect */
+  --project-card-p: #1f2933;
+  --project-card-small: #6b7280;
 
-  /* Borders */
-  --border: 1px solid #d1d5db;       /* light border */
+  --note-bg: #ffffff;
+  --note-selected-bg: rgba(14, 99, 156, 0.12);
+  --note-hover: #f1f5f9;
+  --note-date: #6b7280;
 
-  /* Messages */
+  --button-bg: #0e639c;
+  --button-text: #ffffff;
+  --button-bg-hover: #1177bb;
+  --border: 1px solid #d1d5db;
+
   --message-card-border: 1px solid #d1d5db;
-  --messgae-sender-bg: #ffffff;       /* sender background */
-  --message-sender-text: #333333;    /* sender text */
-  --messgae-receiver-bg: #e6f4ea;    /* receiver background */
-  --message-receiver-text: #000000;  /* receiver text */
-  --message-time: #6b7280;           /* time text */
+  --message-card-hover: #111827;
+  --message-card-hover-bg: #f3f4f6;
+  --messgae-sender-bg: #ffffff;
+  --message-sender-text: #111827;
+  --messgae-receiver-bg: #98eeb0;
+  --message-receiver-text: #111827;
+  --message-time: #333;
+
+  --replybox-bg: #ffffff;
+  --replybox-border: 1px solid #d1d5db;
+
+  --assistant-panel-bg: #ffffff;
+  --assistant-header-bg: #f3f4f6;
+  --assistant-h3: #1f2933;
+  --modal-back-bg: rgba(0, 0, 0, 0.35);
+
+  --theme-bg: black;
+  --icon-color: white;
 }
+
+
 
 [data-theme="dark"] {
   --bg-color: #191919;
   --text-color: #f0efed;
+  
   --sidebar-bg: #202020;
-  --member-title-color: #00A2C2;
+  --dashboard-profile-color: #00b4d8;
+  --sidebar-a-color: #8b8b8b;
+  --sidebar-li-color: #8b8b8b;
+  --sidebar-a-hover-color: #c5cae9;
+
+  --layout-border: 1px solid #3E4452;
+  --box-border: 1px solid #c5cae9;
+  --title-color: #00A2C2;
 
   --project-card-p: #D2D1D1;
   --project-card-small: #666;
 
   --note-bg: #2a2a2a;
   --note-selected-bg: rgba(14, 99, 156, 0.18);
-  
+  --note-hover: #191919;
+  --note-date: #777;
+
   --button-bg: #0e639c;
   --button-text: #ffffff;
   --button-bg-hover: #1177bb;
-
   --border: 1px solid #c5cae9;
 
   --message-card-border: 1px solid #F0EFED;
+  --message-card-hover: #FFF;
+  --message-card-hover-bg: #333;
   --messgae-sender-bg: #fff;
   --message-sender-text: #333;
   --messgae-receiver-bg: #D9FDD3;
   --message-receiver-text: black;
   --message-time: #9ca3af;
+  --replybox-bg: #333;
+  --replybox-border: 1px solid #D1D5DB;
 
+  --assistant-panel-bg: #1e1e1e;
+  --assistant-header-bg: #252526;
+  --assistant-h3: #CCC;
+  --modal-back-bg: rgba(0, 0, 0, 0.5);
+
+  --theme-bg: #fff;
+  --icon-color: black;
 }
+
 
 /* Use variables */
 body {
@@ -65,17 +104,160 @@ body {
 
 .sidebar {
   background-color: var(--sidebar-bg);
+  border: var(--layout-border);
+}
+
+.sidebar h3 a {
+    color: var(--dashboard-profile-color);
+}
+
+.sidebar li {
+    color: var(--sidebar-li-color);
+}
+
+.sidebar a {
+    color: var(--sidebar-a-color);
+}
+
+.sidebar li:hover,a:hover {
+    color: var(--sidebar-a-hover-color);
+  cursor: pointer;
+}
+
+.main-content {
+    color: var(--text-color);
+}
+
+.new-project {
+    background-color: var(--newproject-bg);
+    color: var(--newproject-color);
+}
+
+.project-card {
+    background-color: var(--sidebar-bg);
+}
+
+.project-title {
+    color: var(--project-title);
+}
+.project-card p {
+    color: var(--project-card-p);
+}
+.project-card small {
+    color: var(--project-card-small);
+}
+
+.assistant-panel {
+    background-color: var(--assistant-panel-bg);
+    border: var(--layout-border);
+}
+.input-bar {
+    background-color: var(--assistant-panel-bg);
+    border: var(--layout-border);
+}
+
+.panel-header {
+    background-color: var(--assistant-header-bg);
+    color: var(--text-color);
+    border-bottom: var(--layout-border);
+}
+.panel-header h3 {
+    color: var(--assistant-h3);
+}
+
+.project-title {
+    color: var(--text-color);
+}
+.project-description {
+    color: var(--project-card-p);
+}
+
+.notes-title {
+    color: var(--title-color);
 }
 
 .note-card {
   background-color: var(--note-bg);
+  border: var(--box-border);
+}
+
+.note-card:hover {
+    background-color: var(--note-hover);
+}
+
+.note-date {
+    color: var(--note-date);
+}
+
+.members {
+    color: var(--title-color);
 }
 
 .note-card.selected {
   background-color: var(--note-selected-bg);
 }
 
+input {
+    border: var(--box-border);
+    background-color: var(--sidebar-bg);
+    color: var(--text-color);
+}
+
+
 button {
   background-color: var(--button-bg);
   color: var(--button-text);
+}
+
+button:hover {
+    background-color: var(--button-bg-hover);
+}
+
+.modal-backdrop {
+    background-color: var(--modal-back-bg);
+}
+
+.modal {
+    background-color: var(--sidebar-bg);
+}
+
+textarea {
+    border: var(--box-border);
+    background-color: var(--sidebar-bg);
+    color: var(--text-color);
+}
+
+.selected {
+    background-color: var(--note-selected-bg);
+}
+
+.conversation-card{
+    border: var(--box-border);
+}
+.conversation-card:hover {
+    color: var(--message-card-hover);
+    background-color: var(--message-card-hover-bg);
+}
+
+.sender {
+    background-color: var(--messgae-sender-bg);
+    color: var(--message-sender-text);
+}
+.mine {
+    background-color: var(--messgae-receiver-bg);
+    color: var(--message-receiver-text);
+}
+
+.reply-box {
+    background-color: var(--replybox-bg);
+    border: var(--replybox-border);
+}
+
+.theme-btn {
+    color: var(--icon-color);
+    background-color: var(--theme-bg);
+}
+.theme-btn:hover {
+    background-color: var(--theme-bg);
+    transform: scale(0.9);
 }

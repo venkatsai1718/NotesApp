@@ -28,12 +28,14 @@ function Home() {
   return (
     <div className="home-container">
       <aside className="sidebar">
-        <h3>
-          <Link to="/home">{capitalize(currentUser.name)} - Dashboard</Link>
-        </h3>
-            <button onClick={toggleTheme}>
-      {theme === "light" ? "🌙 Dark Mode" : "☀️ Light Mode"}
-    </button>
+        <div className="profile">
+          <h3>
+            <Link to="/home">{capitalize(currentUser.name)} - Dashboard</Link>
+          </h3>
+          <button className="theme-btn" onClick={toggleTheme}>
+            {theme === "light" ? "☾" : "☼"}
+          </button>
+        </div>
 
         <nav>
           <ul>

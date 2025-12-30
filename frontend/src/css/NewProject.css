@@ -1,9 +1,7 @@
 .new-project {
   padding: 2rem;
-  border-radius: 16px;
-  background: #202020;
-  color: #F0EFED;
-  box-shadow: 0 10px 30px rgba(8, 8, 8, 0.8);
+  /* background: #202020;
+  color: #F0EFED; */
 }
 
 .new-project h2 {
@@ -17,11 +15,11 @@
   padding: 12px;
   margin-bottom: 1rem;
   border-radius: 10px;
-  border: 1px solid #c5cae9;
   font-size: 14px;
   transition: border 0.3s ease;
+  /* border: 1px solid #c5cae9;
   background: #202020;
-  color: #F0EFED;
+  color: #F0EFED; */
 }
 
 .new-project textarea {
@@ -37,8 +35,8 @@
 /* Buttons */
 .create-btn {
   padding: 12px 22px;
-  color: #202020;
-  background: #F0EFED;
+  /* color: #202020;
+  background: #F0EFED; */
   border: none;
   border-radius: 12px;
   font-weight: 600;

@@ -16,7 +16,7 @@
 
 /* Project card */
 .project-card {
-  background: #202020;
+  /* background: #202020; */
   padding: 1.5rem;
   border-radius: 16px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
@@ -33,13 +33,13 @@
 
 .project-card p {
   font-size: 14px;
-  color: #d2d1d1;
+  /* color: #d2d1d1; */
   margin-bottom: 0.8rem;
 }
 
 .project-card small {
   font-size: 12px;
-  color: #666;
+  /* color: #666; */
 }
 
 .project-card-link {
