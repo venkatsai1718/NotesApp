@@ -14,7 +14,7 @@
   transition: background 0.2s;
 }
 .conversation-card:hover {
-    color: #fff;
+  color: #fff;
   background: #333;
 }
 

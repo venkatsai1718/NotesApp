@@ -42,14 +42,15 @@
   flex: 1;
   padding: 8px 10px;
   border-radius: 6px;
-  background-color: #EAEAEA;
-  border: 1px solid #ccc;
+  border: 1px solid #c5cae9;
+  background: #202020;
+  color: #F0EFED;
   font-size: 14px;
   outline: none;
 }
 
 .add-member-section input:focus {
-  border-color: #0e639c;
+  outline: none;
   box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.3);
 }
 
@@ -170,7 +171,10 @@
   padding: 10px;
   margin-bottom: 10px;
   border-radius: 8px;
-  border: 1px solid #ccc;
+  border: 1px solid #c5cae9;
+  background: #202020;
+  color: #F0EFED;
+
 }
 
 .note-text {
@@ -214,35 +218,64 @@
   height: 100px;
   padding: 10px;
   border-radius: 8px;
-  border: 1px solid #ccc;
-  background-color: #191919;
-  color: #fff;
+  border: 1px solid #c5cae9;
+  background: #202020;
+  color: #F0EFED;
   resize: none;
 }
 
 .modal-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between; /* left vs right */
+  align-items: center;
   margin-top: 1rem;
-  gap: 10px;
+  gap: 1rem;
 }
 
-.modal-actions .cancel {
-  background: #fff;
-  border: none;
-  padding: 8px 14px;
+.right-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.delete {
+  background: transparent;
+  color: #ff5f56;
+  border: 1px solid #ff5f56;
+  padding: 0.4rem 0.8rem;
   border-radius: 6px;
   cursor: pointer;
 }
 
-.modal-actions .add {
-  background: #1976d2;
-  color: white;
+.delete:hover {
+  background: rgba(255, 95, 86, 0.1);
+}
+
+.cancel {
+  background: #3e3e3e;
+  color: #f0efed;
   border: none;
-  padding: 8px 14px;
+  padding: 0.4rem 0.8rem;
   border-radius: 6px;
   cursor: pointer;
 }
+
+.cancel:hover {
+  background: #5a5a5a;
+}
+
+.add {
+  background: #0e639c;
+  color: #fff;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.add:hover {
+  background: #1177bb;
+}
+
 
 .note-card.selected {
   border: none;

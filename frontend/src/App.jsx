@@ -10,6 +10,7 @@ import NewProject from "./components/NewProject";
 import Projects from "./components/Projects";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { SelectedNotesProvider } from "./contexts/SelectedNotesContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 
 import "./css/App.css";
 
@@ -31,9 +32,11 @@ function App() {
           <Route
             path="/home"
             element={
-              <ProtectedRoute>
-                <Home />
-              </ProtectedRoute>
+              <ThemeProvider>
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              </ThemeProvider>
             }
           >
             <Route path="new-project" element={<NewProject />} />

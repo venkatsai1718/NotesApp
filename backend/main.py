@@ -181,6 +181,17 @@ async def update_note(project_id: str, note_id: str, note: models.NoteCreate, cu
 
     return {"message": "Note updated"}
 
+@app.delete("/projects/{project_id}/notes/{note_id}")
+async def delete_note(project_id: str, note_id: str, current_user: models.User = Depends(get_current_user)):
+    result = await db.projects.update_one(
+        {"_id": ObjectId(project_id)},
+        {"$pull": {"notes": {"_id": ObjectId(note_id)}}}
+    )
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Note not found")
+    return {"message": "Note deleted successfully"}
+
+
 @app.post("/projects/{project_id}/members")
 async def add_member(project_id: str, member: models.AddMember, current_user: dict = Depends(get_current_user)):
     """

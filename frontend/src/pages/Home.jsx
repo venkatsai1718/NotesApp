@@ -5,6 +5,8 @@ import { useAuth } from "../contexts/AuthContext";
 
 import "../css/Home.css";
 
+import { useTheme } from "../contexts/ThemeContext";
+
 function Home() {
   const { currentUser, loading } = useAuth();
   const [assistantOpen, setAssistantOpen] = useState(false);
@@ -20,12 +22,18 @@ function Home() {
   const capitalize = (str) => {
     return `${str[0].toUpperCase()}${str.slice(1)}`;
   };
+
+  const { theme, toggleTheme } = useTheme();
+
   return (
     <div className="home-container">
       <aside className="sidebar">
         <h3>
           <Link to="/home">{capitalize(currentUser.name)} - Dashboard</Link>
         </h3>
+            <button onClick={toggleTheme}>
+      {theme === "light" ? "🌙 Dark Mode" : "☀️ Light Mode"}
+    </button>
 
         <nav>
           <ul>

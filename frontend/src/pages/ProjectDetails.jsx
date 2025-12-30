@@ -92,6 +92,30 @@ function ProjectDetails() {
     }
   };
 
+const handleDeleteNote = async () => {
+  if (!editingIndex) return; // safety check
+
+  const confirmDelete = window.confirm("Are you sure you want to delete this note?");
+  if (!confirmDelete) return;
+
+  try {
+    await api.delete(`/projects/${projectId}/notes/${editingIndex}`);
+
+    setProject((prev) => ({
+      ...prev,
+      notes: prev.notes.filter((note) => note.id !== editingIndex),
+    }));
+
+    setShowModal(false);
+    setEditingIndex(null);
+    setNoteTitle("");
+    setNewNote("");
+  } catch (err) {
+    //console.error("Failed to delete note:", err);
+  }
+};
+
+
   const handleAddMember = async () => {
     if (!memberEmail.trim()) {
       setError("Email is required");
@@ -99,7 +123,7 @@ function ProjectDetails() {
     }
 
     try {
-      setError(""); // clear previous error
+      setError("");
 
       const res = await api.post(`/projects/${projectId}/members`, {
         email: memberEmail.trim(),
@@ -126,7 +150,7 @@ function ProjectDetails() {
 
   const handleMemberClick = (member) => {
     setSelectedMember(member);
-    setMessageText(""); // reset previous message
+    setMessageText("");
   };
 
   const sendMessageToMember = async () => {
@@ -158,7 +182,6 @@ function ProjectDetails() {
     return null;
   }
 
-  // Still loading data
   if (loading) {
     return <p>Loading project...</p>;
   }
@@ -266,44 +289,6 @@ function ProjectDetails() {
             +
           </button>
         </div>
-
-        {/* <div className="notes">
-          {project.notes?.length === 0 ? (
-            <p>No notes yet.</p>
-          ) : (
-            sortedNotes.map((note) => (
-              <div
-                key={note.id}
-                className={`note-card ${"isSelected " ? "selected" : ""}`}
-                onClick={(e) => {
-                  if (e.ctrlKey || e.metaKey) {
-                    setSelectedNotes((prev) =>
-                      prev.some((n) => n.id === note.id)
-                        ? prev.filter((n) => n.id !== note.id)
-                        : [...prev, note]
-                    );
-                    return;
-                  }
-
-                  setNoteTitle(note.title);
-                  setNewNote(note.body);
-                  setEditingIndex(note.id); // use backend ID
-                  setShowModal(true);
-                }}
-              >
-                <h4 className="note-title">{capitalize(note.title)}</h4>
-                <p className="note-text">
-                  {note.body.length > 100
-                    ? note.body.substring(0, 100) + " ..."
-                    : note.body}
-                </p>
-                <span className="note-date">
-                  Last Updated: {note.createdAt}
-                </span>
-              </div>
-            ))
-          )}
-        </div> */}
 <div className="notes">
   {project.notes?.length === 0 ? (
     <p>No notes yet.</p>
@@ -350,43 +335,57 @@ function ProjectDetails() {
 
       </section>
 
-      {/* Modal */}
-      {showModal && (
-        <div className="modal-backdrop">
-          <div className="modal">
-            <h3>{editingIndex ? "Edit Note" : "Add Note"}</h3>
-            <input
-              type="text"
-              placeholder="Note title"
-              value={noteTitle}
-              onChange={(e) => setNoteTitle(e.target.value)}
-              className="note-title-input"
-            />
-            <textarea
-              placeholder="Write your note..."
-              value={newNote}
-              onChange={(e) => setNewNote(e.target.value)}
-            />
+{/* Modal */}
+{showModal && (
+  <div className="modal-backdrop">
+    <div className="modal">
+      <h3>{editingIndex ? "Edit Note" : "Add Note"}</h3>
 
-            <div className="modal-actions">
-              <button
-                className="cancel"
-                onClick={() => {
-                  setShowModal(false);
-                  setEditingIndex(null);
-                  setNoteTitle("");
-                  setNewNote("");
-                }}
-              >
-                Cancel
-              </button>
-              <button className="add" onClick={saveNote}>
-                {editingIndex ? "Save Changes" : "Add"}
-              </button>
-            </div>
-          </div>
+      <input
+        type="text"
+        placeholder="Note title"
+        value={noteTitle}
+        onChange={(e) => setNoteTitle(e.target.value)}
+        className="note-title-input"
+      />
+
+      <textarea
+        placeholder="Write your note..."
+        value={newNote}
+        onChange={(e) => setNewNote(e.target.value)}
+      />
+
+      <div className="modal-actions">
+        {/* LEFT SIDE */}
+        {editingIndex && (
+          <button className="delete" onClick={handleDeleteNote}>
+            Delete
+          </button>
+        )}
+
+        {/* RIGHT SIDE */}
+        <div className="right-actions">
+          <button
+            className="cancel"
+            onClick={() => {
+              setShowModal(false);
+              setEditingIndex(null);
+              setNoteTitle("");
+              setNewNote("");
+            }}
+          >
+            Cancel
+          </button>
+
+          <button className="add" onClick={saveNote}>
+            {editingIndex ? "Save Changes" : "Add"}
+          </button>
         </div>
-      )}
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }
