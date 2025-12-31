@@ -17,6 +17,10 @@ function ProjectDetails() {
 
   const { selectedNotes, setSelectedNotes } = useSelectedNotes();
 
+  const [showNotifyModal, setShowNotifyModal] = useState(false);
+  const [selectedMembers, setSelectedMembers] = useState([]);
+  const [notifyMessage, setNotifyMessage] = useState("");
+
   const [project, setProject] = useState({
     id: "",
     title: "",
@@ -92,29 +96,30 @@ function ProjectDetails() {
     }
   };
 
-const handleDeleteNote = async () => {
-  if (!editingIndex) return; // safety check
+  const handleDeleteNote = async () => {
+    if (!editingIndex) return; // safety check
 
-  const confirmDelete = window.confirm("Are you sure you want to delete this note?");
-  if (!confirmDelete) return;
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this note?"
+    );
+    if (!confirmDelete) return;
 
-  try {
-    await api.delete(`/projects/${projectId}/notes/${editingIndex}`);
+    try {
+      await api.delete(`/projects/${projectId}/notes/${editingIndex}`);
 
-    setProject((prev) => ({
-      ...prev,
-      notes: prev.notes.filter((note) => note.id !== editingIndex),
-    }));
+      setProject((prev) => ({
+        ...prev,
+        notes: prev.notes.filter((note) => note.id !== editingIndex),
+      }));
 
-    setShowModal(false);
-    setEditingIndex(null);
-    setNoteTitle("");
-    setNewNote("");
-  } catch (err) {
-    //console.error("Failed to delete note:", err);
-  }
-};
-
+      setShowModal(false);
+      setEditingIndex(null);
+      setNoteTitle("");
+      setNewNote("");
+    } catch (err) {
+      //console.error("Failed to delete note:", err);
+    }
+  };
 
   const handleAddMember = async () => {
     if (!memberEmail.trim()) {
@@ -164,7 +169,7 @@ const handleDeleteNote = async () => {
       });
 
       // console.log("Message sent:", res.data);
-  sendEmailNotification({'sender_name':currentUser.name, 'receiver_name': selectedMember.name,'email': selectedMember.email, 'message': messageText.trim()});
+      // sendEmailNotification({'sender_name':currentUser.name, 'receiver_name': selectedMember.name,'email': selectedMember.email, 'message': messageText.trim()});
 
       // close modal
       setSelectedMember(null);
@@ -202,32 +207,20 @@ const handleDeleteNote = async () => {
     (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
   );
 
-const sendEmailNotification = (data) => {
-  if (!window.emailjs) {
-    console.error("EmailJS not loaded");
-    return;
-  }
-  window.emailjs
-    .send(
-      "service_vdtt318",
-      "template_tsl5c89",
-      {
-        email: data.email,
-        sender_name: data.sender_name,
-        receiver_name: data.receiver_name,
-        message: data.message,
-      }
-    )
-    .then(
-      (result) => {
-        console.log("Email sent", result.text);
-      },
-      (error) => {
-        console.error("Email failed", error);
-      }
-    );
-};
+  const handleSendNotification = () => {
+    selectedMembers.forEach((member) => {
+      window.emailjs.send("service_vdtt318", "template_tsl5c89", {
+        sender_name: currentUser.name,
+        receiver_name: member.name,
+        email: member.email,
+        message: notifyMessage,
+      });
+    });
 
+    setShowNotifyModal(false);
+    setSelectedMembers([]);
+    setNotifyMessage("");
+  };
 
   return (
     <div className="container">
@@ -237,7 +230,17 @@ const sendEmailNotification = (data) => {
         <p className="project-description">
           {project.description || "No description"}
         </p>
-        <h4 className="members">Members</h4>
+        <div className="member-notify">
+<h4 className="members">Members</h4>
+        <div className="notification">
+          <button
+            className="notify-btn"
+            onClick={() => setShowNotifyModal(true)}
+          >
+            🔔 Notify
+          </button>
+        </div>
+        </div>
         {error && (
           <p
             style={{
@@ -309,6 +312,66 @@ const sendEmailNotification = (data) => {
         </div>
       )}
 
+      {showNotifyModal && (
+        <div className="modal-backdrop">
+          <div className="modal notify-modal">
+            <h3>Notify Team Members</h3>
+
+            <div className="notify-members">
+              {project?.members?.map((member) => {
+                const isSelected = selectedMembers.some(
+                  (m) => m.id === member.id
+                );
+
+                return (
+                  <div
+                    key={member.id}
+                    className={`notify-member ${isSelected ? "selected" : ""}`}
+                    onClick={() => {
+                      setSelectedMembers((prev) =>
+                        prev.some((m) => m.id === member.id)
+                          ? prev.filter((m) => m.id !== member.id)
+                          : [...prev, member]
+                      );
+                    }}
+                  >
+                    {capitalize(member.name)}
+                    <span>{member.email}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            <textarea
+              placeholder="Type message to notify..."
+              value={notifyMessage}
+              onChange={(e) => setNotifyMessage(e.target.value)}
+            />
+
+            <div className="modal-actions">
+              <button
+                className="cancel"
+                onClick={() => {
+                  setShowNotifyModal(false);
+                  setSelectedMembers([]);
+                  setNotifyMessage("");
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="add"
+                disabled={!notifyMessage || selectedMembers.length === 0}
+                onClick={handleSendNotification}
+              >
+                Notify
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Notes */}
       <section className="project-notes">
         <div className="notes-header">
@@ -317,103 +380,101 @@ const sendEmailNotification = (data) => {
             +
           </button>
         </div>
-<div className="notes">
-  {project.notes?.length === 0 ? (
-    <p>No notes yet.</p>
-  ) : (
-    sortedNotes.map((note) => {
-      const isSelected = selectedNotes.some((n) => n.id === note.id);
+        <div className="notes">
+          {project.notes?.length === 0 ? (
+            <p>No notes yet.</p>
+          ) : (
+            sortedNotes.map((note) => {
+              const isSelected = selectedNotes.some((n) => n.id === note.id);
 
-      return (
-        <div
-          key={note.id}
-          className={`note-card ${isSelected ? "selected" : ""}`}
-          onClick={(e) => {
-            if (e.ctrlKey || e.metaKey) {
-              setSelectedNotes((prev) =>
-                prev.some((n) => n.id === note.id)
-                  ? prev.filter((n) => n.id !== note.id)
-                  : [...prev, note]
+              return (
+                <div
+                  key={note.id}
+                  className={`note-card ${isSelected ? "selected" : ""}`}
+                  onClick={(e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                      setSelectedNotes((prev) =>
+                        prev.some((n) => n.id === note.id)
+                          ? prev.filter((n) => n.id !== note.id)
+                          : [...prev, note]
+                      );
+                      return;
+                    }
+
+                    setNoteTitle(note.title);
+                    setNewNote(note.body);
+                    setEditingIndex(note.id);
+                    setShowModal(true);
+                  }}
+                >
+                  <h4 className="note-title">{capitalize(note.title)}</h4>
+
+                  <p className="note-text">
+                    {note.body.length > 100
+                      ? note.body.substring(0, 100) + " ..."
+                      : note.body}
+                  </p>
+
+                  <span className="note-date">
+                    Last Updated: {note.createdAt}
+                  </span>
+                </div>
               );
-              return;
-            }
-
-            setNoteTitle(note.title);
-            setNewNote(note.body);
-            setEditingIndex(note.id);
-            setShowModal(true);
-          }}
-        >
-          <h4 className="note-title">{capitalize(note.title)}</h4>
-
-          <p className="note-text">
-            {note.body.length > 100
-              ? note.body.substring(0, 100) + " ..."
-              : note.body}
-          </p>
-
-          <span className="note-date">
-            Last Updated: {note.createdAt}
-          </span>
+            })
+          )}
         </div>
-      );
-    })
-  )}
-</div>
-
       </section>
 
-{/* Modal */}
-{showModal && (
-  <div className="modal-backdrop">
-    <div className="modal">
-      <h3>{editingIndex ? "Edit Note" : "Add Note"}</h3>
+      {/* Modal */}
+      {showModal && (
+        <div className="modal-backdrop">
+          <div className="modal">
+            <h3>{editingIndex ? "Edit Note" : "Add Note"}</h3>
 
-      <input
-        type="text"
-        placeholder="Note title"
-        value={noteTitle}
-        onChange={(e) => setNoteTitle(e.target.value)}
-        className="note-title-input"
-      />
+            <input
+              type="text"
+              placeholder="Note title"
+              value={noteTitle}
+              onChange={(e) => setNoteTitle(e.target.value)}
+              className="note-title-input"
+            />
 
-      <textarea
-        placeholder="Write your note..."
-        value={newNote}
-        onChange={(e) => setNewNote(e.target.value)}
-      />
+            <textarea
+              placeholder="Write your note..."
+              value={newNote}
+              onChange={(e) => setNewNote(e.target.value)}
+            />
 
-      <div className="modal-actions">
-        {/* LEFT SIDE */}
-        {editingIndex && (
-          <button className="delete" onClick={handleDeleteNote}>
-            Delete
-          </button>
-        )}
+            <div className="modal-actions">
+              {/* LEFT SIDE */}
+              {editingIndex && (
+                <button className="delete" onClick={handleDeleteNote}>
+                  Delete
+                </button>
+              )}
 
-        {/* RIGHT SIDE */}
-        <div className="right-actions">
-          <button
-            className="cancel"
-            onClick={() => {
-              setShowModal(false);
-              setEditingIndex(null);
-              setNoteTitle("");
-              setNewNote("");
-            }}
-          >
-            Cancel
-          </button>
+              {/* RIGHT SIDE */}
+              <div className="right-actions">
+                <button
+                  className="cancel"
+                  onClick={() => {
+                    setShowModal(false);
+                    setEditingIndex(null);
+                    setNoteTitle("");
+                    setNewNote("");
+                  }}
+                >
+                  Cancel
+                </button>
 
-          <button className="add" onClick={saveNote}>
-            {editingIndex ? "Save Changes" : "Add"}
-          </button>
+                <button className="add" onClick={saveNote}>
+                  {editingIndex ? "Save Changes" : "Add"}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </div>
-)}
-
+      )}
     </div>
   );
 }
