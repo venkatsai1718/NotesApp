@@ -5,6 +5,7 @@ from datetime import datetime
 class UserCreate(BaseModel):
     name: str
     email: str
+    username: str
     password: str
 
 class User(BaseModel):
@@ -38,18 +39,60 @@ class AddMember(BaseModel):
     
 
 class Message(BaseModel):
-    sender_id: Optional[str] = None  # will be set automatically
+    sender_id: Optional[str] = None
     receiver_id: str
     content: str
-    created_at: Optional[datetime] = None  # will be set automatically
+    created_at: Optional[datetime] = None
 
 class MessageCreate(BaseModel):
     receiver_id: str
     content: str
     parent_id: str | None = None
+
+# Update your TaskMessage model in models.py
+from pydantic import BaseModel, Field, field_validator
+from typing import List, Optional
+from datetime import datetime
+
+class TaskMessage(BaseModel):
+    id: str
+    text: str
+    sender: str
+    timestamp: datetime
+    parentId: Optional[str] = None
+    replies: List['TaskMessage'] = []
     
+    @field_validator('timestamp', mode='before')
+    @classmethod
+    def parse_timestamp(cls, v):
+        if isinstance(v, str):
+            return datetime.fromisoformat(v.replace('Z', '+00:00'))
+        return v
+
+# Enable forward references for recursive model
+TaskMessage.model_rebuild()
+    
+class Task(BaseModel):
+    id: str
+    title: str
+    status: str = "pending"
+    messages: List[TaskMessage] = []
+    created_at: datetime
+    mentioned_users: List[str] = []
+    
+class TaskCreate(BaseModel):
+    title: str
+    status: str
+    created_at: datetime
+
+class TaskUpdate(BaseModel):
+    title: str
+    status: str
+    messages: List[TaskMessage]
+
+
 class LLMMessage(BaseModel):
-    role: str   # "user" | "assistant"
+    role: str
     message: str
 
 class LLMRequest(BaseModel):

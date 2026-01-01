@@ -31,14 +31,24 @@ async def get_users():
 @app.post("/register")
 async def register(user: models.UserCreate):
 
-    existing_user = await db["users"].find_one({"email": user.email})
+    existing_user = await db["users"].find_one({
+        "$or": [
+            {"email": user.email},
+            {"username": user.username}
+        ]
+    })
     if existing_user:
-        return {"error": "User already exists"}
+        if existing_user.get("email") == user.email:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        if existing_user.get("username") == user.username:
+            raise HTTPException(status_code=400, detail="Username already taken")
+
 
     hashed_password = Hash.bcrypt(user.password)
     await db["users"].insert_one({
         "name": user.name,
         "email": user.email,
+        "username": user.username,
         "password": hashed_password,
     })
 
@@ -319,6 +329,117 @@ async def send_message(
     msg["_id"] = str(result.inserted_id)
     return msg
 
+from typing import List
+
+
+@app.get("/tasks", response_model=List[models.Task])
+async def get_my_tasks(current_user=Depends(get_current_user)):
+    username = current_user["username"]
+
+    cursor = db["tasks"].find({
+        "$or": [
+            {"owner": username},
+            {"mentioned_users": username}
+        ]
+    }).sort("created_at", -1)  # Sort by newest first
+
+    tasks = []
+    async for task_doc in cursor:
+        tasks.append(schemas.get_task(task_doc))
+    return tasks
+
+# ------------------ CREATE TASK ------------------
+@app.post("/tasks")
+async def create_task(task: models.TaskCreate, current_user=Depends(get_current_user)):
+    task_doc = {
+        "title": task.title,
+        "status": task.status,
+        "messages": [],
+        "owner": current_user['username'],
+        "created_at": task.created_at
+    }
+
+    result = await db["tasks"].insert_one(task_doc)
+    task_doc["_id"] = result.inserted_id
+
+    return schemas.get_task(task_doc)
+
+
+
+# ------------------ UPDATE TASK ------------------
+import re
+def extract_mentions(text: str):
+    """Return list of usernames mentioned in text."""
+    return re.findall(r"@(\w+)", text)
+
+def extract_mentions_from_messages(messages):
+    """Recursively extract mentions from all messages and replies"""
+    mentioned = set()
+    for msg in messages:
+        mentioned.update(extract_mentions(msg.text))
+        if msg.replies:
+            mentioned.update(extract_mentions_from_messages(msg.replies))
+    return mentioned
+
+def message_to_dict(msg: models.TaskMessage):
+    """Convert TaskMessage to dict recursively"""
+    return {
+        "id": msg.id,
+        "text": msg.text,
+        "sender": msg.sender,
+        "timestamp": msg.timestamp,
+        "parentId": msg.parentId,
+        "replies": [message_to_dict(reply) for reply in msg.replies]
+    }
+
+@app.put("/tasks/{task_id}", response_model=models.Task)
+async def update_task(task_id: str, task: models.TaskUpdate, current_user=Depends(get_current_user)):
+    try:
+        print(f"Updating task {task_id}")
+        print(f"Current user: {current_user['username']}")
+        print(f"Task data received: {task.model_dump()}")
+        
+        # Extract mentioned users from all messages (including nested replies)
+        mentioned_users = extract_mentions_from_messages(task.messages)
+        print(f"Mentioned users: {mentioned_users}")
+
+        # Convert messages to dict format for MongoDB
+        messages_dict = [message_to_dict(msg) for msg in task.messages]
+        print(f"Converted messages: {len(messages_dict)} top-level messages")
+        
+        task_data = {
+            "title": task.title,
+            "status": task.status,
+            "messages": messages_dict,
+            "mentioned_users": list(mentioned_users)
+        }
+
+        # Update in MongoDB - check both owner and mentioned_users
+        result = await db["tasks"].find_one_and_update(
+            {
+                "_id": ObjectId(task_id),
+                "$or": [
+                    {"owner": current_user['username']},
+                    {"mentioned_users": current_user['username']}
+                ]
+            },
+            {"$set": task_data},
+            return_document=True
+        )
+
+        if not result:
+            print(f"Task not found for task_id: {task_id}, user: {current_user['username']}")
+            raise HTTPException(status_code=404, detail="Task not found or you don't have permission")
+
+        print("Task updated successfully")
+        return schemas.get_task(result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error updating task: {type(e).__name__}: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post('/llms')
 async def llm_request(data: models.LLMRequest):

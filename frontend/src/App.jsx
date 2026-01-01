@@ -9,15 +9,22 @@ import Messages from "./pages/Messages";
 import NewProject from "./components/NewProject";
 import Projects from "./components/Projects";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Tasks from './components/Tasks'
+
 import { SelectedNotesProvider } from "./contexts/SelectedNotesContext";
+import { SelectedTasksProvider } from "./contexts/SelectedTasksContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 
-import "./css/App.css";
+// import "./css/App.css";
 
 const NotesLayout = () => (
+      <SelectedTasksProvider>
+
   <SelectedNotesProvider>
     <Outlet />
   </SelectedNotesProvider>
+      </SelectedTasksProvider>
+
 );
 
 function App() {
@@ -41,6 +48,7 @@ function App() {
           >
             <Route path="new-project" element={<NewProject />} />
             <Route path="projects" element={<Projects />} />
+            <Route path="tasks" element={<Tasks />} />
 
             <Route path="projects/:projectId" element={<ProjectDetails />} />
 
