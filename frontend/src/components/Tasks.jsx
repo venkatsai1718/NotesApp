@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   MessageSquare,
   Plus,
@@ -6,7 +6,10 @@ import {
   Send,
   Reply,
   ChevronDown,
-  ChevronRight,
+  ChevronUp,
+  MoreHorizontal,
+  Check,
+  Clock,
 } from "lucide-react";
 import api from "../api";
 import { useTheme } from "../contexts/ThemeContext";
@@ -17,16 +20,18 @@ export default function CollaborativeTaskManager() {
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+
   const [selectedTaskId, setSelectedTaskId] = useState(null);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [message, setMessage] = useState("");
-  const [showUserSuggestions, setShowUserSuggestions] = useState(false);
-  const [mentionPosition, setMentionPosition] = useState(0);
-  const [cursorPosition, setCursorPosition] = useState(0);
   const [replyingTo, setReplyingTo] = useState(null);
   const [collapsedThreads, setCollapsedThreads] = useState(new Set());
+
+  const [showUserSuggestions, setShowUserSuggestions] = useState(false);
+  const [mentionPosition, setMentionPosition] = useState(undefined);
   const messageInputRef = useRef(null);
+  const cursorPositionRef = useRef(0);
 
   const { selectedTasks, setSelectedTasks } = useSelectedTasks();
 
@@ -34,6 +39,7 @@ export default function CollaborativeTaskManager() {
     return tasks.find((t) => t.id === selectedTaskId) || null;
   }, [tasks, selectedTaskId]);
 
+  /* Get current user */
   useEffect(() => {
     api
       .get("/me")
@@ -41,6 +47,7 @@ export default function CollaborativeTaskManager() {
       .catch((err) => console.error("Current user fetch failed", err));
   }, []);
 
+  /* Get users */
   useEffect(() => {
     api
       .get("/users")
@@ -48,6 +55,7 @@ export default function CollaborativeTaskManager() {
       .catch((err) => console.error("User fetch failed", err));
   }, []);
 
+  /* load tasks*/
   useEffect(() => {
     const loadTasks = async () => {
       try {
@@ -64,11 +72,13 @@ export default function CollaborativeTaskManager() {
     loadTasks();
   }, []);
 
+  /* Create Task in DB*/
   const createTaskInDB = async (task) => {
     const res = await api.post("/tasks", task);
     return res.data;
   };
 
+  /* update task in db*/
   const updateTaskInDB = async (task) => {
     const convertMessageFormat = (msg) => ({
       id: msg.id,
@@ -137,42 +147,83 @@ export default function CollaborativeTaskManager() {
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (showUserSuggestions && filteredUsers.length > 0) {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setShowUserSuggestions(false);
+        return;
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (filteredUsers[0]) {
+          insertMention(filteredUsers[0].username);
+        }
+        return;
+      }
+    }
+
+    if (e.key === "Enter" && !e.shiftKey && !showUserSuggestions) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
   const handleMessageChange = (e) => {
     const value = e.target.value;
     const cursor = e.target.selectionStart;
 
-    setMessage(value);
+    cursorPositionRef.current = cursor;
 
     const before = value.slice(0, cursor);
     const atIndex = before.lastIndexOf("@");
+    const shouldShow =
+      atIndex !== -1 && !before.slice(atIndex + 1).includes(" ");
 
-    if (atIndex !== -1 && !before.slice(atIndex + 1).includes(" ")) {
-      setShowUserSuggestions(true);
+    setMessage(value);
+    setShowUserSuggestions(shouldShow);
+    if (shouldShow) {
       setMentionPosition(atIndex);
-      setCursorPosition(cursor);
-    } else {
-      if (showUserSuggestions) {
-        setShowUserSuggestions(false);
-      }
     }
   };
 
   const insertMention = (username) => {
-    const before = message.slice(0, mentionPosition);
-    const after = message.slice(cursorPosition);
-    const newMessage = `${before}@${username} ${after}`;
-    const newCursorPos = mentionPosition + username.length + 2;
+    const input = messageInputRef.current;
+    if (!input) return;
+
+    const cursor = cursorPositionRef.current;
+    const before = message.slice(0, cursor);
+    const atIndex = before.lastIndexOf("@");
+
+    const beforeMention = message.slice(0, atIndex);
+    const afterCursor = message.slice(cursor);
+    const newMessage = `${beforeMention}@${username} ${afterCursor}`;
+    const newPos = atIndex + username.length + 2;
 
     setMessage(newMessage);
     setShowUserSuggestions(false);
+    setMentionPosition(undefined);
 
-    setTimeout(() => {
-      if (messageInputRef.current) {
-        messageInputRef.current.focus();
-        messageInputRef.current.setSelectionRange(newCursorPos, newCursorPos);
+    requestAnimationFrame(() => {
+      if (input) {
+        input.focus();
+        input.setSelectionRange(newPos, newPos);
       }
-    }, 0);
+    });
   };
+
+  const filteredUsers = useMemo(() => {
+    if (!showUserSuggestions || !message || mentionPosition === undefined) {
+      return [];
+    }
+
+    const cursor = cursorPositionRef.current;
+    const searchTerm = message.slice(mentionPosition + 1, cursor).toLowerCase();
+
+    return users.filter(
+      (u) => u.username && u.username.toLowerCase().startsWith(searchTerm)
+    );
+  }, [showUserSuggestions, message, mentionPosition, users]);
 
   const addReplyToMessage = (messages, parentId, newReply) => {
     let found = false;
@@ -205,14 +256,11 @@ export default function CollaborativeTaskManager() {
   };
 
   const sendEmailNotifications = async (messageText, taskTitle) => {
-    // Extract mentioned usernames from message
     const mentionedUsernames =
       messageText.match(/@(\w+)/g)?.map((m) => m.slice(1)) || [];
 
-    // Find users to notify (mentioned users + person being replied to)
     const usersToNotify = new Set();
 
-    // Add mentioned users
     mentionedUsernames.forEach((username) => {
       const user = users.find((u) => u.username === username);
       if (user && user.email && user.id !== currentUser.id) {
@@ -220,7 +268,6 @@ export default function CollaborativeTaskManager() {
       }
     });
 
-    // Add user being replied to
     if (replyingTo) {
       const repliedUser = users.find((u) => u.name === replyingTo.sender);
       if (
@@ -232,7 +279,6 @@ export default function CollaborativeTaskManager() {
       }
     }
 
-    // Send emails
     for (const userStr of usersToNotify) {
       const user = JSON.parse(userStr);
       try {
@@ -291,11 +337,12 @@ export default function CollaborativeTaskManager() {
       prev.map((t) => (t.id === selectedTask.id ? updatedTask : t))
     );
 
-    // Send email notifications to mentioned users and replied user
     sendEmailNotifications(message, selectedTask.title);
 
     setMessage("");
     setReplyingTo(null);
+    setShowUserSuggestions(false);
+    setMentionPosition(undefined);
 
     try {
       const result = await updateTaskInDB(updatedTask);
@@ -330,16 +377,19 @@ export default function CollaborativeTaskManager() {
     }, 0);
   };
 
-  const filteredUsers = (() => {
-    if (!showUserSuggestions || !message) return [];
+  const getRelativeTime = (timestamp) => {
+    const now = new Date();
+    const then = new Date(timestamp);
+    const diffMs = now - then;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
 
-    const searchTerm = message
-      .slice(mentionPosition + 1, cursorPosition)
-      .toLowerCase();
-    return users.filter(
-      (u) => u.username && u.username.toLowerCase().startsWith(searchTerm)
-    );
-  })();
+    if (diffMins < 1) return "just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${diffDays}d ago`;
+  };
 
   const MessageThread = ({ msg, depth = 0 }) => {
     const hasReplies = msg.replies && msg.replies.length > 0;
@@ -347,115 +397,138 @@ export default function CollaborativeTaskManager() {
     const replyCount = countReplies(msg.replies);
 
     return (
-      <div className={`${depth > 0 ? "ml-6 md:ml-8 mt-2" : "mt-3"}`}>
-        <div className="flex gap-2 md:gap-3">
-          <div className="flex-shrink-0">
-            <div
-              className={`w-7 h-7 md:w-8 md:h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs md:text-sm font-semibold`}
-            >
-              {msg.sender[0]}
-            </div>
-            {hasReplies && !isCollapsed && (
+      <div className={`${depth > 0 ? "ml-2" : ""}`}>
+        <div className="flex gap-2">
+          {/* Vertical line for nested comments */}
+          {depth > 0 && (
+            <div className="flex flex-col items-center w-6 flex-shrink-0">
               <div
-                className={`w-0.5 ${
-                  theme === "dark" ? "bg-gray-600" : "bg-gray-300"
-                } ml-3 md:ml-4 h-full mt-2`}
-              ></div>
-            )}
+                className={`w-0.5 h-full ${
+                  theme === "dark" ? "bg-gray-700" : "bg-gray-300"
+                }`}
+              />
+            </div>
+          )}
+
+          {/* Vote arrows placeholder (for visual consistency) */}
+          <div className="flex flex-col items-center gap-1 pt-2 flex-shrink-0 w-8">
+            <div
+              className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                theme === "dark" ? "bg-gray-700" : "bg-gray-200"
+              }`}
+            >
+              <span className="text-xs font-bold">{msg.sender[0]}</span>
+            </div>
           </div>
 
-          <div className="flex-1 min-w-0">
-            <div
-              className={`${
-                theme === "dark"
-                  ? "bg-gray-700 border-gray-600"
-                  : "bg-white border-gray-200"
-              } p-2 md:p-3 rounded-lg shadow-sm border`}
-            >
-              <div className="flex items-center justify-between mb-1 flex-wrap gap-1">
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`text-xs md:text-sm font-semibold ${
-                      theme === "dark" ? "text-white" : "text-gray-800"
-                    }`}
-                  >
-                    {msg.sender}
-                  </span>
-                  <span
-                    className={`text-xs ${
-                      theme === "dark" ? "text-gray-400" : "text-gray-500"
-                    }`}
-                  >
-                    {new Date(msg.timestamp).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
-                {replyingTo?.id === msg.id && (
-                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                    Replying...
-                  </span>
-                )}
-              </div>
-
-              <div
-                className={`text-xs md:text-sm ${
-                  theme === "dark" ? "text-gray-200" : "text-gray-700"
-                } mb-2 break-words`}
+          {/* Message content */}
+          <div className="flex-1 min-w-0 mt-2 p-4 rounded-xl border border-[oklch(80%_0.02_260)] space-y-4">
+            <div className="flex items-center gap-2 mb-1">
+              <span
+                className={`text-xs font-bold ${
+                  theme === "dark" ? "text-gray-300" : "text-gray-700"
+                }`}
               >
-                {msg.text.split(/(@\w+)/g).map((p, i) =>
-                  p.startsWith("@") ? (
-                    <span
-                      key={i}
-                      className="text-blue-600 font-medium bg-blue-50 dark:bg-blue-900/30 px-1 rounded"
-                    >
-                      {p}
-                    </span>
-                  ) : (
-                    p
-                  )
-                )}
-              </div>
-
-              <div className="flex items-center gap-2 md:gap-3 mt-2 flex-wrap">
-                <button
-                  onClick={() => {
-                    setReplyingTo(msg);
-                    messageInputRef.current?.focus();
-                  }}
-                  className={`flex items-center gap-1 text-xs ${
-                    theme === "dark"
-                      ? "text-gray-400 hover:text-blue-400"
-                      : "text-gray-600 hover:text-blue-600"
-                  } transition`}
-                >
-                  <Reply size={12} />
-                  Reply
-                </button>
-
-                {hasReplies && (
-                  <button
-                    onClick={() => toggleThread(msg.id)}
-                    className={`flex items-center gap-1 text-xs ${
-                      theme === "dark"
-                        ? "text-gray-400 hover:text-blue-400"
-                        : "text-gray-600 hover:text-blue-600"
-                    } transition`}
-                  >
-                    {isCollapsed ? (
-                      <ChevronRight size={12} />
-                    ) : (
-                      <ChevronDown size={12} />
-                    )}
-                    {replyCount} {replyCount === 1 ? "reply" : "replies"}
-                  </button>
-                )}
-              </div>
+                {msg.sender}
+              </span>
+              {/* <span
+                className={`text-xs ${
+                  theme === "dark" ? "text-gray-500" : "text-gray-400"
+                }`}
+              >
+                •
+              </span> */}
+              {/* <span
+                className={`text-xs ${
+                  theme === "dark" ? "text-gray-500" : "text-gray-400"
+                }`}
+              >
+                {getRelativeTime(msg.timestamp)}
+              </span> */}
+              {replyingTo?.id === msg.id && (
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                  Replying...
+                </span>
+              )}
             </div>
 
+            {!isCollapsed && (
+              <>
+                <div
+                  className={`text-sm leading-relaxed mb-2 ${
+                    theme === "dark" ? "text-gray-200" : "text-gray-800"
+                  }`}
+                >
+                  {msg.text.split(/(@\w+)/g).map((p, i) =>
+                    p.startsWith("@") ? (
+                      <span
+                        key={i}
+                        className={`font-medium ${
+                          theme === "dark"
+                            ? "text-blue-400 hover:text-blue-300"
+                            : "text-blue-600 hover:text-blue-700"
+                        } cursor-pointer`}
+                      >
+                        {p}
+                      </span>
+                    ) : (
+                      p
+                    )
+                  )}
+                </div>
+
+                <div className="flex items-center gap-4 mt-2">
+                  <button
+                    onClick={() => {
+                      setReplyingTo(msg);
+                      const senderUser = users.find(
+                        (u) => u.name === msg.sender
+                      );
+                      if (senderUser && senderUser.username) {
+                        setMessage(`@${senderUser.username} `);
+                      }
+                      messageInputRef.current?.focus();
+                    }}
+                    className={`text-xs font-bold ${
+                      theme === "dark"
+                        ? "text-gray-400 hover:text-gray-200"
+                        : "text-gray-500 hover:text-gray-700"
+                    } transition`}
+                  >
+                    Reply
+                  </button>
+
+                  {hasReplies && (
+                    <button
+                      onClick={() => toggleThread(msg.id)}
+                      className={`text-xs font-bold ${
+                        theme === "dark"
+                          ? "text-gray-400 hover:text-gray-200"
+                          : "text-gray-500 hover:text-gray-700"
+                      } transition`}
+                    >
+                      {replyCount} {replyCount === 1 ? "reply" : "replies"}
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+
+            {hasReplies && isCollapsed && (
+              <button
+                onClick={() => toggleThread(msg.id)}
+                className={`text-xs font-bold ${
+                  theme === "dark"
+                    ? "text-blue-400 hover:text-blue-300"
+                    : "text-blue-600 hover:text-blue-700"
+                } transition`}
+              >
+                [{replyCount} more {replyCount === 1 ? "reply" : "replies"}]
+              </button>
+            )}
+
             {hasReplies && !isCollapsed && (
-              <div className="mt-2">
+              <div className="mt-3 space-y-0">
                 {msg.replies.map((reply) => (
                   <MessageThread key={reply.id} msg={reply} depth={depth + 1} />
                 ))}
@@ -467,242 +540,55 @@ export default function CollaborativeTaskManager() {
     );
   };
 
-  const TaskHeader = ({ task }) => (
-    <div
-      className={`p-3 md:p-4 ${
-        theme === "dark"
-          ? "bg-gray-800 border-gray-700"
-          : "bg-white border-gray-200"
-      } border-b flex flex-col md:flex-row justify-between md:items-center gap-3`}
-    >
-      <div>
-        <h2
-          className={`text-lg md:text-xl font-semibold ${
-            theme === "dark" ? "text-white" : "text-gray-800"
-          }`}
-        >
-          {task.title}
-        </h2>
-        <p
-          className={`text-xs md:text-sm ${
-            theme === "dark" ? "text-gray-400" : "text-gray-500"
-          }`}
-        >
-          Status:{" "}
-          <span
-            className={`font-medium ${
-              task.status === "completed" ? "text-green-600" : "text-yellow-600"
-            }`}
-          >
-            {task.status}
-          </span>
-        </p>
-      </div>
-
-      <button
-        onClick={() => toggleTaskStatus(task.id)}
-        className="bg-blue-600 text-white px-3 md:px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm md:text-base w-full md:w-auto"
-      >
-        Mark as {task.status === "pending" ? "Completed" : "Pending"}
-      </button>
-    </div>
-  );
-
-  const TaskChat = ({ task }) => (
-    <div
-      className={`flex-1 overflow-y-auto no-scrollbar p-3 md:p-4 ${
-        theme === "dark" ? "bg-gray-900" : "bg-gray-50"
-      }`}
-    >
-      {!task.messages || task.messages.length === 0 ? (
-        <div
-          className={`text-center ${
-            theme === "dark" ? "text-gray-400" : "text-gray-500"
-          } mt-8`}
-        >
-          <p>No messages yet. Start the conversation!</p>
-          <p className="text-xs md:text-sm mt-2">
-            Type @ to mention team members
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-1">
-          {task.messages
-            .filter((msg) => !msg.parentId)
-            .map((msg) => (
-              <MessageThread key={msg.id} msg={msg} />
-            ))}
-        </div>
-      )}
-    </div>
-  );
-
-  const TaskInput = () => {
-    return (
-      <div
-        className={`p-3 md:p-4 ${
-          theme === "dark"
-            ? "bg-gray-800 border-gray-700"
-            : "bg-white border-gray-200"
-        } border-t relative`}
-      >
-        {replyingTo && (
-          <div
-            className={`mb-2 p-2 ${
-              theme === "dark"
-                ? "bg-blue-900/30 border-blue-700"
-                : "bg-blue-50 border-blue-200"
-            } border rounded-lg flex items-center justify-between`}
-          >
-            <div className="flex items-center gap-2 text-xs md:text-sm min-w-0">
-              <Reply size={14} className="text-blue-600 flex-shrink-0" />
-              <span
-                className={`${
-                  theme === "dark" ? "text-gray-200" : "text-gray-700"
-                } truncate`}
-              >
-                Replying to {" "}
-                <span className="font-semibold">{replyingTo.sender}</span>
-              </span>
-            </div>
-            <button
-              onClick={() => setReplyingTo(null)}
-              className={`${
-                theme === "dark"
-                  ? "text-gray-400 hover:text-gray-200"
-                  : "text-gray-500 hover:text-gray-700"
-              } flex-shrink-0`}
-            >
-              <X size={16} />
-            </button>
-          </div>
-        )}
-
-        {showUserSuggestions && filteredUsers.length > 0 && (
-          <div
-            className={`absolute bottom-full left-3 md:left-4 right-3 md:right-4 mb-2 ${
-              theme === "dark"
-                ? "bg-gray-700 border-gray-600"
-                : "bg-white border-gray-200"
-            } shadow-lg rounded-lg border max-h-48 overflow-y-auto no-scrollbar z-10`}
-          >
-            {filteredUsers.map((u) => (
-              <div
-                key={u.id}
-                onClick={() => insertMention(u.username)}
-                className={`p-2 md:p-3 ${
-                  theme === "dark" ? "hover:bg-gray-600" : "hover:bg-gray-100"
-                } cursor-pointer flex items-center gap-2`}
-              >
-                <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs md:text-sm font-semibold">
-                  {u.username[0].toUpperCase()}
-                </div>
-                <span
-                  className={`font-medium text-sm md:text-base ${
-                    theme === "dark" ? "text-white" : "text-gray-800"
-                  }`}
-                >
-                  @{u.username}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div className="flex gap-2">
-          <input
-            ref={messageInputRef}
-            type="text"
-            value={message}
-            onChange={handleMessageChange}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey && !showUserSuggestions) {
-                e.preventDefault();
-                sendMessage();
-              }
-            }}
-            placeholder={
-              replyingTo ? "Write a reply..." : "Add a comment... use @username"
-            }
-            className={`flex-1 border ${
-              theme === "dark"
-                ? "border-gray-600 bg-gray-700 text-white"
-                : "border-gray-300"
-            } rounded-lg px-3 md:px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base`}
-            autoComplete="off"
-          />
-          <button
-            onClick={sendMessage}
-            disabled={!message.trim()}
-            className="bg-blue-600 text-white px-3 md:px-4 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Send size={16} className="md:w-[18px] md:h-[18px]" />
-          </button>
-        </div>
-      </div>
-    );
+  const closeModal = () => {
+    setSelectedTaskId(null);
+    setMessage("");
+    setReplyingTo(null);
+    setShowUserSuggestions(false);
+    setMentionPosition(undefined);
   };
 
   return (
     <div
-      className={`h-screen ${
-        theme === "dark"
-          ? "border-white bg-gray-900"
-          : "border-black bg-gray-100"
-      } flex flex-col md:flex-row overflow-hidden`}
+      className={`min-h-screen ${
+        theme === "dark" ? "bg-gray-900" : "bg-gray-50"
+      } p-4 md:p-6 transition-colors`}
     >
-      {/* Sidebar */}
-      <div
-        className={`
-      w-full md:w-80 md:min-w-[200px]
-      border-r
-      overflow-y-auto
-      no-scrollbar
-      ${
-        theme === "dark"
-          ? "bg-gray-800 border-gray-700"
-          : "bg-white border-gray-200"
-      }
-    `}
-      >
-        <div className="flex items-center justify-between p-4 border-b border-gray-300">
+      {/* Header */}
+      <div className="max-w-7xl mx-auto mb-6">
+        <div className="flex items-center justify-between">
           <h2
-            className={`text-2xl font-bold text-gray-800 ${
-              theme === "dark" ? "text-white" : "text-black"
+            className={`text-3xl md:text-4xl font-bold ${
+              theme === "dark" ? "text-white" : "text-gray-900"
             }`}
           >
             Tasks
           </h2>
-
           <button
             onClick={() => setShowCreateTask(true)}
-            className="
-      inline-flex items-center justify-center gap-2
-      px-4 py-2
-      w-fit
-      rounded-lg
-      bg-blue-600 text-white
-      hover:bg-blue-700
-      transition
-      text-sm
-    "
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition font-medium"
           >
-            <Plus size={16} className="md:w-[18px] md:h-[18px]" />
-            New
+            <Plus size={20} />
+            <span className="hidden sm:inline">New Task</span>
           </button>
         </div>
+      </div>
 
-        <div className="pb-4">
-          {tasks.length === 0 ? (
-            <p
-              className={`text-center ${
-                theme === "dark" ? "text-gray-400" : "text-gray-500"
-              } text-xs md:text-sm mt-4`}
-            >
-              No tasks yet
-            </p>
-          ) : (
-            tasks.map((task) => {
+      {/* Tasks Grid */}
+      <div className="max-w-7xl mx-auto">
+        {tasks.length === 0 ? (
+          <div
+            className={`text-center py-16 ${
+              theme === "dark" ? "text-gray-400" : "text-gray-500"
+            }`}
+          >
+            <MessageSquare size={64} className="mx-auto mb-4 opacity-30" />
+            <p className="text-xl mb-2">No tasks yet</p>
+            <p className="text-sm">Create your first task to get started</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {tasks.map((task) => {
               const isSelected = selectedTasks.some((t) => t.id === task.id);
 
               return (
@@ -720,108 +606,269 @@ export default function CollaborativeTaskManager() {
 
                     setSelectedTaskId(task.id);
                   }}
-                  className={`m-1 p-3 md:p-4 cursor-pointer rounded-lg border transition-all
-  ${
-    theme === "dark"
-      ? "border-gray-700 text-gray-200"
-      : "border-gray-200 text-gray-800"
-  }
-
-  ${
-    selectedTaskId === task.id
-      ? theme === "dark"
-        ? "bg-indigo-900/30 border-indigo-500"
-        : "bg-indigo-50 border-indigo-500"
-      : theme === "dark"
-      ? "hover:bg-gray-700"
-      : "hover:bg-gray-50"
-  }
-                    ${
-                      isSelected
-                        ? theme === "dark"
-                          ? "border-indigo-500 bg-gradient-to-br from-indigo-900/30 to-purple-900/30"
-                          : "border-indigo-500 bg-gradient-to-br from-indigo-50 to-purple-50"
-                        : theme === "dark"
-                        ? "border-gray-700 bg-gray-700 hover:border-indigo-400"
-                        : "border-gray-200 bg-white hover:border-indigo-300"
-                    }`}
+                  className={`p-4 cursor-pointer rounded-lg border transition-all ${
+                    theme === "dark"
+                      ? "bg-gray-800 border-gray-700 hover:border-gray-600"
+                      : "bg-white border-gray-200 hover:border-gray-300"
+                  }
+                  ${
+                    isSelected
+                      ? theme === "dark"
+                        ? "border-indigo-500 bg-gradient-to-br from-indigo-900/30 to-purple-900/30"
+                        : "border-indigo-500 bg-gradient-to-br from-indigo-50 to-purple-50"
+                      : ""
+                  }`}
                 >
-                  <div
-                    className={`font-medium text-sm md:text-base ${
-                      theme === "dark" ? "text-white" : "text-gray-800"
-                    }`}
-                  >
-                    {task.title}
+                  <div className="flex items-start justify-between mb-2">
+                    <div
+                      className={`font-semibold text-base ${
+                        theme === "dark" ? "text-white" : "text-gray-900"
+                      }`}
+                    >
+                      {task.title}
+                    </div>
+                    {task.status === "completed" ? (
+                      <Check
+                        size={18}
+                        className="text-green-500 flex-shrink-0"
+                      />
+                    ) : (
+                      <Clock
+                        size={18}
+                        className="text-yellow-500 flex-shrink-0"
+                      />
+                    )}
                   </div>
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <div className="flex items-center gap-3 text-xs">
                     <span
-                      className={`text-xs px-2 py-0.5 rounded-full ${
-                        task.status === "completed"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-yellow-100 text-yellow-700"
+                      className={`${
+                        theme === "dark" ? "text-gray-400" : "text-gray-500"
                       }`}
                     >
                       {task.status}
                     </span>
                     {task.messages && task.messages.length > 0 && (
-                      <span
-                        className={`text-xs ${
-                          theme === "dark" ? "text-gray-400" : "text-gray-500"
-                        }`}
-                      >
-                        {task.messages.length} messages
-                      </span>
+                      <>
+                        <span
+                          className={`${
+                            theme === "dark" ? "text-gray-600" : "text-gray-300"
+                          }`}
+                        >
+                          •
+                        </span>
+                        <span
+                          className={`flex items-center gap-1 ${
+                            theme === "dark" ? "text-gray-400" : "text-gray-500"
+                          }`}
+                        >
+                          <MessageSquare size={12} />
+                          {task.messages.length}
+                        </span>
+                      </>
                     )}
                   </div>
                 </div>
               );
-            })
-          )}
-        </div>
-      </div>
-
-      {/* Main content */}
-      <div
-        className={`
-      flex-1 min-w-0 flex flex-col overflow-hidden
-      ${theme === "dark" ? "bg-gray-900" : "bg-gray-100"}
-    `}
-      >
-        {selectedTask ? (
-          <>
-            <TaskHeader task={selectedTask} />
-            <TaskChat task={selectedTask} />
-            <TaskInput />
-          </>
-        ) : (
-          <div
-            className={`flex-1 flex flex-col items-center justify-center ${
-              theme === "dark" ? "text-gray-500" : "text-gray-400"
-            }`}
-          >
-            <MessageSquare
-              size={48}
-              className={`mb-4 md:w-16 md:h-16 ${
-                theme === "dark" ? "text-gray-600" : "text-gray-300"
-              }`}
-            />
-            <p className="text-base md:text-lg">
-              Select a task to view details
-            </p>
+            })}
           </div>
         )}
       </div>
 
-      {showCreateTask && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      {/* Task Detail Modal */}
+      {selectedTask && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
           <div
             className={`${
               theme === "dark" ? "bg-gray-800" : "bg-white"
-            } p-4 md:p-6 rounded-lg w-full max-w-md shadow-xl`}
+            } rounded-xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl`}
+          >
+            {/* Modal Header */}
+            <div
+              className={`p-5 ${
+                theme === "dark" ? "border-gray-700" : "border-gray-200"
+              } border-b flex items-start justify-between gap-4`}
+            >
+              <div className="flex-1 min-w-0">
+                <h2
+                  className={`text-xl md:text-2xl font-bold mb-3 ${
+                    theme === "dark" ? "text-white" : "text-gray-900"
+                  }`}
+                >
+                  {selectedTask.title}
+                </h2>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleTaskStatus(selectedTask.id)}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-full transition ${
+                      selectedTask.status === "completed"
+                        ? "bg-green-100 text-green-700 hover:bg-green-200"
+                        : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+                    }`}
+                  >
+                    {selectedTask.status === "completed"
+                      ? "✓ Completed"
+                      : "⏳ Pending"}
+                  </button>
+                </div>
+              </div>
+              <button
+                onClick={closeModal}
+                className={`${
+                  theme === "dark"
+                    ? "text-gray-400 hover:text-white"
+                    : "text-gray-500 hover:text-gray-700"
+                } transition flex-shrink-0`}
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Modal Body - Messages */}
+            <div
+              className={`flex-1 overflow-y-auto p-5 ${
+                theme === "dark" ? "bg-gray-900" : "bg-gray-50"
+              }`}
+            >
+              {!selectedTask.messages || selectedTask.messages.length === 0 ? (
+                <div
+                  className={`text-center py-12 ${
+                    theme === "dark" ? "text-gray-400" : "text-gray-500"
+                  }`}
+                >
+                  <MessageSquare
+                    size={48}
+                    className="mx-auto mb-3 opacity-30"
+                  />
+                  <p className="mb-2">No Conversation</p>
+                  <p className="text-sm">
+                    start converation! Type @ to mention team members
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {selectedTask.messages
+                    .filter((msg) => !msg.parentId)
+                    .map((msg) => (
+                      <MessageThread key={msg.id} msg={msg} />
+                    ))}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer - Input */}
+            <div
+              className={`p-5 ${
+                theme === "dark"
+                  ? "bg-gray-800 border-gray-700"
+                  : "bg-white border-gray-200"
+              } border-t relative`}
+            >
+              {replyingTo && (
+                <div
+                  className={`mb-3 p-2 rounded-lg flex items-center justify-between text-sm ${
+                    theme === "dark"
+                      ? "bg-gray-700 text-gray-300"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Reply size={14} className="text-blue-600 flex-shrink-0" />
+                    <span className="truncate">
+                      Replying to <strong>{replyingTo.sender}</strong>
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setReplyingTo(null);
+                      setMessage("");
+                    }}
+                    className={`${
+                      theme === "dark"
+                        ? "text-gray-400 hover:text-gray-200"
+                        : "text-gray-500 hover:text-gray-700"
+                    } flex-shrink-0`}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
+
+              {showUserSuggestions && filteredUsers.length > 0 && (
+                <div
+                  className={`absolute bottom-full left-5 right-5 mb-2 ${
+                    theme === "dark"
+                      ? "bg-gray-700 border-gray-600"
+                      : "bg-white border-gray-200"
+                  } shadow-xl rounded-lg border max-h-48 overflow-y-auto z-10`}
+                >
+                  {filteredUsers.map((u) => (
+                    <div
+                      key={u.id}
+                      onClick={() => insertMention(u.username)}
+                      className={`p-3 ${
+                        theme === "dark"
+                          ? "hover:bg-gray-600"
+                          : "hover:bg-gray-50"
+                      } cursor-pointer flex items-center gap-2`}
+                    >
+                      <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold">
+                        {u.username[0].toUpperCase()}
+                      </div>
+                      <span
+                        className={`font-medium ${
+                          theme === "dark" ? "text-white" : "text-gray-900"
+                        }`}
+                      >
+                        @{u.username}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <input
+                  ref={messageInputRef}
+                  type="text"
+                  value={message}
+                  onChange={handleMessageChange}
+                  onKeyDown={handleKeyDown}
+                  placeholder={
+                    replyingTo
+                      ? "Write a reply..."
+                      : "Send a Message!! use @user to mention"
+                  }
+                  className={`flex-1 border ${
+                    theme === "dark"
+                      ? "border-gray-600 bg-gray-700 text-white placeholder-gray-400"
+                      : "border-gray-300 placeholder-gray-400"
+                  } rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 transition`}
+                  autoComplete="off"
+                />
+                <button
+                  onClick={sendMessage}
+                  disabled={!message.trim()}
+                  className="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Task Modal */}
+      {showCreateTask && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+          <div
+            className={`${
+              theme === "dark" ? "bg-gray-800" : "bg-white"
+            } p-6 rounded-xl w-full max-w-md shadow-2xl`}
           >
             <h3
-              className={`font-semibold text-lg md:text-xl mb-4 ${
-                theme === "dark" ? "text-white" : "text-gray-800"
+              className={`font-bold text-xl mb-4 ${
+                theme === "dark" ? "text-white" : "text-gray-900"
               }`}
             >
               Create New Task
@@ -834,30 +881,30 @@ export default function CollaborativeTaskManager() {
                 theme === "dark"
                   ? "border-gray-600 bg-gray-700 text-white"
                   : "border-gray-300"
-              } p-2 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm md:text-base`}
-              placeholder="Enter task title..."
+              } p-3 w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              placeholder="Task title..."
               autoFocus
             />
-            <div className="mt-4 flex justify-end gap-2">
+            <div className="mt-5 flex justify-end gap-2">
               <button
                 onClick={() => {
                   setShowCreateTask(false);
                   setNewTaskTitle("");
                 }}
-                className={`px-3 md:px-4 py-2 ${
+                className={`px-4 py-2 font-medium rounded-lg transition ${
                   theme === "dark"
                     ? "text-gray-300 hover:bg-gray-700"
                     : "text-gray-700 hover:bg-gray-100"
-                } rounded-lg transition text-sm md:text-base`}
+                }`}
               >
                 Cancel
               </button>
               <button
                 onClick={createTask}
                 disabled={!newTaskTitle.trim()}
-                className="bg-blue-600 text-white px-3 md:px-4 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 text-sm md:text-base"
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 font-medium"
               >
-                Create Task
+                Create
               </button>
             </div>
           </div>
