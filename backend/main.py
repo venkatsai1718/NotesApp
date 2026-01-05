@@ -441,26 +441,16 @@ async def update_task(task_id: str, task: models.TaskUpdate, current_user=Depend
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post('/llms')
-async def llm_request(data: models.LLMRequest):
-    # getting user message
-    last_message = data.messages[-1].message
-    print(last_message)
-    # TEMP response (replace with real LLM later)
-    response = f"Answer: {ask_llm(last_message)}"
-
-    return {
-        "role": "assistant",
-        "message": response
-    }
-    
+import requests
+from typing import Dict
 from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 import os
 
+load_dotenv()
+
 
 def ask_llm(prompt: str) -> str:
-    load_dotenv()
     OPEN_ROUTER_KEY = os.getenv("OPENROUTER_API_KEY")
     llm = ChatOpenAI(
         model="meta-llama/llama-3.3-70b-instruct:free",
@@ -470,3 +460,88 @@ def ask_llm(prompt: str) -> str:
     )
     response = llm.invoke(prompt)
     return response.content
+
+def search_web(query: str) -> List[Dict[str, str]]:
+    """
+    Search the web using Serper API
+    https://serper.dev/
+    """
+    
+    SERPER_API_KEY = os.getenv('SERPER_API_KEY')
+    if not SERPER_API_KEY:
+        raise ValueError("SERPER_API_KEY not set")
+
+    url = "https://google.serper.dev/search"
+    headers = {
+        "X-API-KEY": SERPER_API_KEY,
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "q": query,
+        "num": 5
+    }
+
+    try:
+        response = requests.post(
+            url,
+            json=payload,
+            headers=headers,
+            timeout=10
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        results = []
+        for item in data.get("organic", []):
+            results.append({
+                "title": item.get("title", ""),
+                "snippet": item.get("snippet", ""),
+                "url": item.get("link", "")
+            })
+
+        return results
+
+    except requests.exceptions.RequestException as e:
+        raise RuntimeError(f"Serper request failed: {e}")
+
+
+@app.post('/llms')
+async def llm_request(data: models.LLMRequest):
+    
+    print(data)
+    
+    # getting user message
+    last_message = data.messages[-1].message
+    print(last_message)
+    
+    sources = []
+    
+    # Perform web search if enabled
+    if data.use_search:
+        print("🔍 Searching the web...")
+        search_results = search_web(last_message)
+        
+        # Add search context to the message
+        if search_results:
+            search_context = "\n\nWeb search results:\n"
+            for i, result in enumerate(search_results, 1):
+                search_context += f"{i}. {result['title']}\n"
+                search_context += f"   {result['snippet']}\n"
+                search_context += f"   Source: {result['url']}\n\n"
+                sources.append(result['url'])
+            
+            # Append search context to the message
+            enhanced_message = f"{search_context}\nPlease answer based on the search results above. {last_message}"
+            response = ask_llm(enhanced_message)
+        else:
+            return 'Failed to get search context from web'
+    else:
+        # TEMP response (replace with real LLM later)
+        response = f"Answer: {ask_llm(last_message)}"
+
+    return {
+        "role": "assistant",
+        "message": response,
+        "sources": sources
+    }
+    

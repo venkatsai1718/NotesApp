@@ -97,3 +97,14 @@ class LLMMessage(BaseModel):
 
 class LLMRequest(BaseModel):
     messages: List[LLMMessage]
+    use_search: bool = False
+
+class Source(BaseModel):
+    title: str
+    snippet: str
+    url: str
+
+class LLMResponse(BaseModel):
+    role: str
+    message: str
+    sources: Optional[List[Source]] = None

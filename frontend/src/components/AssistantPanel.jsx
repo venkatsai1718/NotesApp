@@ -1,6 +1,6 @@
 import api from "../api";
-import { useState } from "react";
-import { Loader, X, Send, FileText, CheckSquare } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Loader, Globe, X, Send, FileText, CheckSquare } from "lucide-react";
 import { useSelectedNotes } from "../contexts/SelectedNotesContext";
 import { useSelectedTasks } from "../contexts/SelectedTasksContext";
 
@@ -9,9 +9,31 @@ function AssistantPanel({ onClose }) {
   const [chat, setChat] = useState("");
   const { selectedNotes, setSelectedNotes } = useSelectedNotes();
   const { selectedTasks, setSelectedTasks } = useSelectedTasks();
+  const [isSearchEnabled, setIsSearchEnabled] = useState(false);
+  const { isLoading, setIsLoading } = useState(false);
+
+  // Load chat history on mount
+  useEffect(() => {
+    const saved = sessionStorage.getItem("chatHistory");
+    if (saved) {
+      try {
+        setChatHistory(JSON.parse(saved));
+      } catch (error) {
+        console.error("Failed to load chat history:", error);
+      }
+    }
+  }, []);
+
+  // Save chat history whenever it changes
+  useEffect(() => {
+    if (chatHistory.length > 0) {
+      sessionStorage.setItem("chatHistory", JSON.stringify(chatHistory));
+    }
+  }, [chatHistory]);
+
 
   const handleOnClick = async () => {
-    if (!chat.trim()) return;
+    if (!chat.trim() || isLoading) return;
 
     // Build context from both notes and tasks
     let contextParts = [];
@@ -26,7 +48,7 @@ function AssistantPanel({ onClose }) {
     if (selectedTasks.length > 0) {
       const tasksContext = selectedTasks
         .map((task) => {
-          let taskInfo = `[TASK] Title: ${task.title}\nStatus: ${task.status}`;
+          let taskInfo = `[TASK] Title: ${task.title}\nStatus: ${task.status}\n`;
           if (task.messages && task.messages.length > 0) {
             const messagesText = task.messages
               .map((msg) => `  - ${msg.sender}: ${msg.text}`)
@@ -55,14 +77,34 @@ function AssistantPanel({ onClose }) {
     setSelectedNotes([]);
     setSelectedTasks([]);
 
+    // Show searching indicator
+    if (isSearchEnabled) {
+      setChatHistory((prev) => [
+        ...prev,
+        { role: "system", message: "🔍 Searching the web..." },
+      ]);
+    }
+
     try {
       const res = await api.post("/llms", {
         messages: updatedHistory,
+        use_search: isSearchEnabled,
       });
+
+      // Remove searching indicator
+      if (isSearchEnabled) {
+        setChatHistory((prev) =>
+          prev.filter((msg) => msg.role !== "assistant")
+        );
+      }
 
       setChatHistory((prev) => [
         ...prev,
-        { role: "assistant", message: res.data.message },
+        {
+          role: "assistant",
+          message: res.data.message,
+          sources: res.data.sources,
+        },
       ]);
     } catch (err) {
       setChatHistory((prev) => [
@@ -87,6 +129,20 @@ function AssistantPanel({ onClose }) {
           <h3 className="text-xl font-bold text-gray-800 dark:text-white">
             AI Assistant
           </h3>
+
+          {/* Web Search Toggle */}
+          <button
+            onClick={() => setIsSearchEnabled(!isSearchEnabled)}
+            className="ml-3 p-3 rounded-xl transition-all duration-300 hover:scale-110"
+          >
+            <Globe
+              className={`w-6 h-6 transition-all duration-300 ${
+                isSearchEnabled
+                  ? "text-indigo-500 drop-shadow-lg"
+                  : "text-slate-300"
+              }`}
+            />
+          </button>
         </div>
         <button
           className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white transition group"
@@ -107,7 +163,8 @@ function AssistantPanel({ onClose }) {
               <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/50 rounded-full text-blue-700 dark:text-blue-300">
                 <FileText className="w-3 h-3" />
                 <span className="text-xs font-medium">
-                  {selectedNotes.length} {selectedNotes.length === 1 ? "note" : "notes"}
+                  {selectedNotes.length}{" "}
+                  {selectedNotes.length === 1 ? "note" : "notes"}
                 </span>
               </div>
             )}
@@ -115,7 +172,8 @@ function AssistantPanel({ onClose }) {
               <div className="flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/50 rounded-full text-green-700 dark:text-green-300">
                 <CheckSquare className="w-3 h-3" />
                 <span className="text-xs font-medium">
-                  {selectedTasks.length} {selectedTasks.length === 1 ? "task" : "tasks"}
+                  {selectedTasks.length}{" "}
+                  {selectedTasks.length === 1 ? "task" : "tasks"}
                 </span>
               </div>
             )}
@@ -137,7 +195,6 @@ function AssistantPanel({ onClose }) {
                 <FileText className="w-4 h-4" />
                 Select Notes, Tasks with Ctrl+Click to add context
               </p>
-
             </div>
           </div>
         ) : (
@@ -157,6 +214,16 @@ function AssistantPanel({ onClose }) {
               >
                 <p className="whitespace-pre-wrap text-sm leading-relaxed">
                   {item.message}
+                  <br />
+                  {item.sources?.length > 0 && (
+                    <ol className="mt-2 ml-4 list-decimal text-sm text-slate-500">
+                      {item.sources.map((source, index) => (
+                        <li key={index} className="break-all">
+                          {source}
+                        </li>
+                      ))}
+                    </ol>
+                  )}
                 </p>
               </div>
             </div>
