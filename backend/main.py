@@ -453,7 +453,7 @@ load_dotenv()
 def ask_llm(prompt: str) -> str:
     OPEN_ROUTER_KEY = os.getenv("OPENROUTER_API_KEY")
     llm = ChatOpenAI(
-        model="meta-llama/llama-3.3-70b-instruct:free",
+        model="z-ai/glm-4.5-air:free",
     # model="openrouter/auto",
     api_key=OPEN_ROUTER_KEY,
     base_url="https://openrouter.ai/api/v1",
@@ -510,9 +510,9 @@ async def llm_request(data: models.LLMRequest):
     
     print(data)
     
-    # getting user message
+    # # getting user message
     last_message = data.messages[-1].message
-    print(last_message)
+    # print(last_message)
     
     sources = []
     
@@ -531,13 +531,18 @@ async def llm_request(data: models.LLMRequest):
                 sources.append(result['url'])
             
             # Append search context to the message
-            enhanced_message = f"{search_context}\nPlease answer based on the search results above. {last_message}"
+            enhanced_message = f"{search_context}\nPlease answer based on the search results above.\n{last_message}"
             response = ask_llm(enhanced_message)
         else:
             return 'Failed to get search context from web'
     else:
         # TEMP response (replace with real LLM later)
-        response = f"Answer: {ask_llm(last_message)}"
+        query = last_message
+        context = data.messages[-1].context
+        if len(context) > 0:
+            query = f"{context}\nPlease answer based on above context.\n Question: {query}"
+        print(query)
+        response = f"Answer:\n {ask_llm(query)}"
 
     return {
         "role": "assistant",

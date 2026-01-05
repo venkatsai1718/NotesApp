@@ -93,6 +93,7 @@ class TaskUpdate(BaseModel):
 
 class LLMMessage(BaseModel):
     role: str
+    context: str = ""
     message: str
 
 class LLMRequest(BaseModel):

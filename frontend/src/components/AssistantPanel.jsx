@@ -10,7 +10,7 @@ function AssistantPanel({ onClose }) {
   const { selectedNotes, setSelectedNotes } = useSelectedNotes();
   const { selectedTasks, setSelectedTasks } = useSelectedTasks();
   const [isSearchEnabled, setIsSearchEnabled] = useState(false);
-  const { isLoading, setIsLoading } = useState(false);
+  const [ isLoading, setIsLoading ] = useState(false);
 
   // Load chat history on mount
   useEffect(() => {
@@ -31,10 +31,10 @@ function AssistantPanel({ onClose }) {
     }
   }, [chatHistory]);
 
-
   const handleOnClick = async () => {
     if (!chat.trim() || isLoading) return;
 
+    setIsLoading(true);
     // Build context from both notes and tasks
     let contextParts = [];
 
@@ -63,14 +63,20 @@ function AssistantPanel({ onClose }) {
 
     const context = contextParts.join("\n\n");
 
-    const userMessage = context
-      ? `Context:\n${context}\n\nQuestion:\n${chat}`
-      : chat;
+    // const userMessage = context
+    //   ? `Context:\n${context}\n\nQuestion:\n${chat}`
+    //   : chat;
 
     const updatedHistory = [
       ...chatHistory,
-      { role: "user", message: userMessage },
+      {
+        role: "user",
+        context: context ? context : "",
+        message: chat,
+      },
     ];
+
+    console.log(updatedHistory);
 
     setChatHistory(updatedHistory);
     setChat("");
@@ -93,9 +99,7 @@ function AssistantPanel({ onClose }) {
 
       // Remove searching indicator
       if (isSearchEnabled) {
-        setChatHistory((prev) =>
-          prev.filter((msg) => msg.role !== "assistant")
-        );
+        setChatHistory((prev) => prev.filter((msg) => msg.role !== "system"));
       }
 
       setChatHistory((prev) => [
@@ -106,6 +110,8 @@ function AssistantPanel({ onClose }) {
           sources: res.data.sources,
         },
       ]);
+
+      setIsLoading(false);
     } catch (err) {
       setChatHistory((prev) => [
         ...prev,
@@ -248,12 +254,15 @@ function AssistantPanel({ onClose }) {
                 handleOnClick();
               }
             }}
-            className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none shadow-sm"
+            disabled={isLoading}
+            className={`flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none shadow-sm ${
+              isLoading ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           />
           <button
             className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-lg transition font-medium shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleOnClick}
-            disabled={!chat.trim()}
+            disabled={isLoading || !chat.trim()}
           >
             <Send className="w-5 h-5" />
           </button>
