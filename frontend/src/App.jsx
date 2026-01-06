@@ -46,6 +46,7 @@ function App() {
               </ThemeProvider>
             }
           >
+
             <Route path="new-project" element={<NewProject />} />
             <Route path="projects" element={<Projects />} />
             <Route path="tasks" element={<Tasks />} />

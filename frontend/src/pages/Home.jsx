@@ -3,12 +3,10 @@ import { Link, useOutlet, useNavigate } from "react-router-dom";
 import {
   Moon,
   Sun,
-  Sparkles,
   SquarePlus,
   FolderOpen,
   MessageCircle,
   CircleCheckBig,
-  Bot,
   Brain,
   LogOut,
   User,
@@ -184,7 +182,7 @@ function Home() {
         {outlet ? (
           outlet
         ) : (
-          <div className="max-w-4xl p-7">
+          <div className="max-w-4xl pt-20 pl-10">
             <div className="flex items-center gap-4 mb-4">
               <h1
                 className={`text-4xl font-bold ${

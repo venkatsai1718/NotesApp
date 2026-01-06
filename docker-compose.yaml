@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: my_mongo_db
+    ports:
+      - "27017:27017"   # optional (for Mongo Compass)
+    volumes:
+      - mongo_data:/data/projectdb
+
+
+  backend:
+    build: ./backend
+    image: my-notes-api
+    container_name: notes_api
+    environment:
+      MONGO_URL: mongodb://mongo:27017
+      DB_NAME: projectdb
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo
+
+
+  frontend:
+    build: ./frontend
+    image: my-notes-ui
+    container_name: notes_ui
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:

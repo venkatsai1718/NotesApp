@@ -575,7 +575,9 @@ export default function CollaborativeTaskManager() {
       </div>
 
       {/* Tasks Grid */}
-      <div className="max-w-7xl mx-auto">
+<div className="w-full min-w-0 max-w-5xl mx-auto px-4 lg:pr-[300px]">
+        {" "}
+        {/* Adjust 420px to your panel width */}
         {tasks.length === 0 ? (
           <div
             className={`text-center py-16 ${
@@ -587,7 +589,8 @@ export default function CollaborativeTaskManager() {
             <p className="text-sm">Create your first task to get started</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 min-w-0">
+
             {tasks.map((task) => {
               const isSelected = selectedTasks.some((t) => t.id === task.id);
 
