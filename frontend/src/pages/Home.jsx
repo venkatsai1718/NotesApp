@@ -107,7 +107,7 @@ function Home() {
                     : "hover:bg-indigo-50 text-gray-700"
                 } transition font-medium group`}
               >
-<SquarePlus className="w-5 h-5 group-hover:text-indigo-600 transition" />
+                <SquarePlus className="w-5 h-5 group-hover:text-indigo-600 transition" />
 
                 <span>New Project</span>
               </Link>
